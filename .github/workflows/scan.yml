@@ -1,21 +1,21 @@
 name: Early Trend Scanner — Hourly Scan & Publish
-
+ 
 on:
   schedule:
     # Runs at minute 5 of every hour (UTC). GitHub's scheduler can lag a few
     # minutes under load, so don't expect second-perfect timing.
     - cron: '5 * * * *'
   workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
-
+ 
 # Allow this workflow to push commits back to the repo
 permissions:
   contents: write
-
+ 
 # Avoid two scans overlapping if a manual run and the cron run land close together
 concurrency:
   group: scanner-run
   cancel-in-progress: false
-
+ 
 jobs:
   scan-and-publish:
     runs-on: ubuntu-latest
@@ -24,51 +24,47 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
+ 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
+ 
       - name: Install dependencies
         run: pip install -r requirements.txt
-
+ 
       - name: Run scanner
         run: python ema_scan_v6.py
-
+ 
       - name: Check for meaningful changes
         id: diffcheck
         run: |
-          # Compare the new HTML against the last committed version, ignoring
-          # the line(s) that contain only the run timestamp (which always
-          # differs). If nothing else changed, skip the commit entirely.
-          if [ ! -f docs/index.html ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+          # Compare the new HTML against the last COMMITTED version (not the
+          # one just written to disk by this run). If docs/index.html was
+          # never committed before, this is the first run — always publish.
+          if ! git cat-file -e HEAD:docs/index.html 2>/dev/null; then
+            echo "First run detected — no prior committed version. Publishing."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-
-          git diff --quiet -- docs/index.html && {
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          }
-
+ 
           # Strip out date/time strings before diffing so a pure timestamp
           # change doesn't count as "meaningful". Matches strings like
           # "Monday, June 23, 2026 at 14:05".
           strip_dates() {
             sed -E 's/[A-Za-z]+day, [A-Za-z]+ [0-9]{1,2}, [0-9]{4} at [0-9]{2}:[0-9]{2}//g' "$1"
           }
-
-          git show HEAD:docs/index.html > /tmp/old.html 2>/dev/null || touch /tmp/old.html
+ 
+          git show HEAD:docs/index.html > /tmp/old.html
           strip_dates /tmp/old.html > /tmp/old_stripped.html
           strip_dates docs/index.html > /tmp/new_stripped.html
-
+ 
           if diff -q /tmp/old_stripped.html /tmp/new_stripped.html > /dev/null; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-
+ 
       - name: Commit and push if changed
         if: steps.diffcheck.outputs.changed == 'true'
         run: |
@@ -77,7 +73,7 @@ jobs:
           git add docs/index.html
           git commit -m "Auto-update: scan results changed [skip ci]"
           git push
-
+ 
       - name: No changes detected
         if: steps.diffcheck.outputs.changed == 'false'
         run: echo "No meaningful change in flagged ETFs/holdings — skipping commit."
