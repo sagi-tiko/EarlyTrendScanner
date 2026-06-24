@@ -80,6 +80,7 @@ TICKERS = {
         "ROBO": "ROBO Global Robotics & Automation",
         "SOXX": "iShares Semiconductor",
         "SMH":  "VanEck Semiconductor",
+        "DRAM": "Roundhill Memory ETF",
         "ICLN": "iShares Global Clean Energy",
         "TAN":  "Invesco Solar",
         "BLOK": "Amplify Transformational Data Sharing",
@@ -186,6 +187,7 @@ HOLDINGS = {
     "ROBO": [("ISRG","Intuitive Surgical"),("ABB","ABB Ltd"),("CGNX","Cognex"),("TER","Teradyne"),("ZBRA","Zebra Technologies"),("BRKS","Brooks Automation"),("IRBT","iRobot"),("NNDM","Nano Dimension"),("MKFG","Markforged"),("RRX","Rexnord")],
     "SOXX": [("NVDA","Nvidia"),("AMD","AMD"),("AVGO","Broadcom"),("QCOM","Qualcomm"),("MU","Micron"),("INTC","Intel"),("AMAT","Applied Materials"),("LRCX","Lam Research"),("KLAC","KLA Corp"),("MRVL","Marvell Technology")],
     "SMH":  [("NVDA","Nvidia"),("TSM","TSMC"),("AVGO","Broadcom"),("ASML","ASML"),("AMD","AMD"),("QCOM","Qualcomm"),("MU","Micron"),("AMAT","Applied Materials"),("LRCX","Lam Research"),("KLAC","KLA Corp")],
+    "DRAM": [("005930.KS","Samsung Electronics"),("000660.KS","SK Hynix"),("MU","Micron Technology"),("WDC","Western Digital"),("STX","Seagate Technology"),("SNDK","SanDisk"),("KIOXIA.T","Kioxia Holdings"),("NAND","Solidigm/Memory ecosystem"),("AMAT","Applied Materials"),("LRCX","Lam Research")],
     "ICLN": [("NEE","NextEra Energy"),("ENPH","Enphase Energy"),("RUN","Sunrun"),("SEDG","SolarEdge"),("FSLR","First Solar"),("BEP","Brookfield Renewable"),("CWEN","Clearway Energy"),("AES","AES Corp"),("PLUG","Plug Power"),("BE","Bloom Energy")],
     "TAN":  [("ENPH","Enphase Energy"),("FSLR","First Solar"),("SEDG","SolarEdge"),("RUN","Sunrun"),("ARRY","Array Technologies"),("CSIQ","Canadian Solar"),("MAXN","Maxeon Solar"),("JKS","JinkoSolar"),("DQ","Daqo New Energy"),("SPWR","SunPower")],
     "BLOK": [("MSTR","MicroStrategy"),("COIN","Coinbase"),("MARA","Marathon Digital"),("RIOT","Riot Platforms"),("SQ","Block Inc"),("PYPL","PayPal"),("IBM","IBM"),("HIVE","HIVE Blockchain"),("BTBT","Bit Digital"),("HUT","Hut 8")],
@@ -519,7 +521,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 
 /* ETF card */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  overflow:hidden;transition:border-color .15s;position:relative}
+  transition:border-color .15s;position:relative}
 .card-top{padding:1.3rem 1.4rem;cursor:pointer;transition:background .15s}
 .card-top:hover{background:var(--surface2)}
 .card[data-mode="strict"]{border-left:3px solid var(--bull)}
@@ -706,7 +708,23 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .footer{margin-top:1.5rem;font-family:'Noto Sans',sans-serif;font-size:.62rem;color:#8fa8c8;text-align:center}
 .card.hidden{display:none}
 .section-group.all-hidden{display:none}
+/* ── Info tooltips (hover/tap to explain terms) ── */
 .no-holdings{font-family:'Noto Sans',sans-serif;font-size:.63rem;color:#8fa8c8;padding:.5rem;text-align:center}
+.tip{position:relative;cursor:help;border-bottom:1px dotted currentColor}
+.tip:hover .tip-bubble, .tip:focus .tip-bubble, .tip:active .tip-bubble{
+  opacity:1;visibility:visible;transform:translate(-50%,4px)}
+.tip-bubble{position:absolute;top:calc(100% + 8px);left:50%;
+  transform:translate(-50%,0);min-width:180px;max-width:260px;
+  background:#0c1422;border:1px solid var(--border);border-radius:8px;
+  padding:.6rem .75rem;font-family:'Noto Sans',sans-serif;font-size:.65rem;
+  font-weight:400;line-height:1.5;color:var(--text);letter-spacing:0;
+  text-transform:none;opacity:0;visibility:hidden;transition:opacity .15s,transform .15s;
+  pointer-events:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.4);text-align:left}
+.tip-bubble::after{content:'';position:absolute;bottom:100%;left:50%;
+  transform:translateX(-50%);border:5px solid transparent;border-bottom-color:var(--border)}
+@media (max-width: 768px){
+  .tip-bubble{max-width:200px;font-size:.62rem}
+}
 
 /* ============================================================
    RESPONSIVE LAYER — mobile / narrow screens only.
@@ -929,12 +947,12 @@ function renderDetail(h){
       <div class="dm"><div class="dm-v">${p1w}</div><div class="dm-l">1 Week</div></div>
       <div class="dm"><div class="dm-v">${p1m}</div><div class="dm-l">1 Month</div></div>
       <div class="dm"><div class="dm-v">${p3m}</div><div class="dm-l">3 Month</div></div>
-      <div class="dm"><div class="dm-v">${rs}</div><div class="dm-l">RS vs SPY</div></div>
+      <div class="dm"><div class="dm-v">${rs}</div><div class="dm-l"><span class="tip" tabindex="0">RS vs SPY<span class="tip-bubble">Relative Strength: this stock's 1-month return minus SPY's 1-month return. Positive means it's beating the broad market, not just rising with it.</span></span></div></div>
     </div>
     <div class="detail-emas">
-      <span class="h-pill ${e20}">EMA20 ${h.above_ema20?'✓':'✗'}</span>
-      <span class="h-pill ${e50}">EMA50 ${h.above_ema50?'✓':'✗'}</span>
-      <span class="h-pill ${e200}">EMA200 ${h.above_ema200?'✓':'✗'}</span>
+      <span class="h-pill ${e20}"><span class="tip" tabindex="0">EMA20 ${h.above_ema20?'ON':'OFF'}<span class="tip-bubble">20-day Exponential Moving Average. The shortest-term trend reference used here &mdash; price above it suggests near-term momentum.</span></span></span>
+      <span class="h-pill ${e50}"><span class="tip" tabindex="0">EMA50 ${h.above_ema50?'ON':'OFF'}<span class="tip-bubble">50-day Exponential Moving Average. A medium-term trend reference, between EMA20 and EMA200.</span></span></span>
+      <span class="h-pill ${e200}"><span class="tip" tabindex="0">EMA200 ${h.above_ema200?'ON':'OFF'}<span class="tip-bubble">200-day Exponential Moving Average. The long-term trend line &mdash; the entire scanner is built around stocks/ETFs reclaiming this level.</span></span></span>
       <span class="h-pill ${w52c}">${w52t}</span>
     </div>
     <div class="detail-spark">
@@ -1133,6 +1151,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </body>
 </html>"""
 
+def tip(label, explanation):
+    """Wrap a label in a hoverable tooltip span. Used for badges/labels
+    across the dashboard so users can hover/tap to see what a term means."""
+    return f'<span class="tip" tabindex="0">{label}<span class="tip-bubble">{explanation}</span></span>'
+
+
 def fmt_pct(v, show_plus=True):
     if v is None: return "n/a"
     s = f"{v:+.1f}%" if show_plus else f"{v:.1f}%"
@@ -1141,10 +1165,11 @@ def fmt_pct(v, show_plus=True):
 def render_card(ticker, name, group, sig, holdings_data):
     """ETF card — clicking opens the modal. No inline drill-down."""
     mode = sig["ema_mode"]
-    mode_badge = {"strict": '<span class="badge b-fresh">STRICT ✓</span>',
-                  "medium150": '<span class="badge b-med">MEDIUM</span>',
-                  "loose": '<span class="badge b-loose">LOOSE</span>'}[mode]
-    flip_badge = '<span class="badge b-flip">RS FLIP ✓</span>' if sig["rs_flipped"] else ""
+    mode_badge = {"strict": f'<span class="badge b-fresh">{tip("STRICT &#x2713;", "Price is above EMA100, EMA150, and EMA200 simultaneously &mdash; the highest-conviction signal tier.")}</span>',
+                  "medium150": f'<span class="badge b-med">{tip("MEDIUM", "Price is above EMA200 and EMA150, but may still be below EMA100. A moderate-conviction signal.")}</span>',
+                  "loose": f'<span class="badge b-loose">{tip("LOOSE", "Price is only above EMA200. The broadest, lowest-conviction signal tier.")}</span>'}[mode]
+    flip_badge = (f'<span class="badge b-flip">{tip("RS FLIP &#x2713;", "Relative Strength Flip: this ETF was underperforming SPY (the S&amp;P 500) 25 days ago and has since flipped to outperforming it &mdash; or swung by 4+ percentage points. A sign the trend is genuinely changing, not just drifting with the market.")}</span>'
+                  if sig["rs_flipped"] else "")
     flip_dot   = "dot-flip" if sig["rs_flipped"] else "dot-on"
     above100, above150 = sig["above100"], sig["above150"]
     # Safe JS string: escape quotes in name
@@ -1165,7 +1190,7 @@ def render_card(ticker, name, group, sig, holdings_data):
         mscore_html = f'''<div class="mscore-block {mscore_css}">
       <div class="mscore-rank">#{mrank}</div>
       <div class="mscore-num">{mscore:.0f}</div>
-      <div class="mscore-lbl">MOMENTUM<br>SCORE</div>
+      <div class="mscore-lbl">{tip("MOMENTUM<br>SCORE", "A 0-100 composite score combining reclaim freshness, RS swing size, how extended the price is, EMA stack depth, base tightness, and breadth of qualifying holdings. Higher = stronger, fresher trend. ETFs are ranked by this score.")}</div>
     </div>'''
     else:
         mscore_html = ""
@@ -1181,30 +1206,30 @@ def render_card(ticker, name, group, sig, holdings_data):
         <span class="grp-tag">{group}</span>
       </div>
       <div class="badges">
-        <span class="badge b-fresh">RECLAIM {sig['days_since_reclaim']}d AGO</span>
+        <span class="badge b-fresh">{tip(f"RECLAIM {sig['days_since_reclaim']}d AGO", "Days since price first crossed back above the EMA200, after having been below it for at least 5 trading days. Fresher reclaims (lower numbers) suggest an earlier-stage trend.")}</span>
         {flip_badge}{mode_badge}
-        <span class="badge b-ext">+{sig['extension_pct']:.1f}% FROM ENTRY</span>
+        <span class="badge b-ext">{tip(f"+{sig['extension_pct']:.1f}% FROM ENTRY", "How far price has moved from the EMA200 reclaim point. Lower numbers mean the move is fresher and less extended &mdash; potentially more room left to run.")}</span>
       </div>
     </div>
     <div class="metrics">
       <div class="m"><div class="m-v">${sig['price']}</div><div class="m-l">Price</div></div>
-      <div class="m"><div class="m-v {'pos' if sig['rs_now']>0 else 'neg'}">{sig['rs_now']:+.1f}%</div><div class="m-l">RS vs SPY</div></div>
-      <div class="m"><div class="m-v {'pos' if sig['rs_prev']>0 else 'neg'}">{sig['rs_prev']:+.1f}%</div><div class="m-l">RS 25d Ago</div></div>
+      <div class="m"><div class="m-v {'pos' if sig['rs_now']>0 else 'neg'}">{sig['rs_now']:+.1f}%</div><div class="m-l">{tip("RS vs SPY", "Relative Strength vs SPY: this ETF's return minus SPY's return over the same window. Positive means it's outperforming the broad market, not just rising with it.")}</div></div>
+      <div class="m"><div class="m-v {'pos' if sig['rs_prev']>0 else 'neg'}">{sig['rs_prev']:+.1f}%</div><div class="m-l">{tip("RS 25d Ago", "What the Relative Strength reading was 25 trading days ago, for comparison against today's value &mdash; this is what flips from negative to positive in an RS Flip.")}</div></div>
       <div class="m"><div class="m-v">${sig['reclaim_price']}</div><div class="m-l">Reclaim Price</div></div>
-      <div class="m"><div class="m-v hl">{sig['consolidation_range_pct']:.1f}%</div><div class="m-l">Prior Range</div></div>
+      <div class="m"><div class="m-v hl">{sig['consolidation_range_pct']:.1f}%</div><div class="m-l">{tip("Prior Range", "The price range (high vs low) in the 60 days before the EMA200 reclaim. A tighter range suggests a cleaner base before the breakout.")}</div></div>
       <div class="m"><div class="m-v pos">+{sig['pct_above_ema200']:.1f}%</div><div class="m-l">vs EMA200</div></div>
     </div>
     <div class="ema-stack">
-      <span class="ema-pill {'ep-on' if above100 else 'ep-off'}">EMA100 ${sig['ema100']} ({'+' if above100 else '-'}{abs(sig['pct_above_ema100']):.1f}%)</span>
-      <span class="ema-pill {'ep-on' if above150 else 'ep-off'}">EMA150 ${sig['ema150']} ({'+' if above150 else '-'}{abs(sig['pct_above_ema150']):.1f}%)</span>
-      <span class="ema-pill ep-on">EMA200 ${sig['ema200']} (+{sig['pct_above_ema200']:.1f}%)</span>
+      <span class="ema-pill {'ep-on' if above100 else 'ep-off'}">{tip(f"EMA100 ${sig['ema100']} ({'+' if above100 else '-'}{abs(sig['pct_above_ema100']):.1f}%)", "100-day Exponential Moving Average. A medium-term trend reference &mdash; price above it is a bullish sign on that timeframe.")}</span>
+      <span class="ema-pill {'ep-on' if above150 else 'ep-off'}">{tip(f"EMA150 ${sig['ema150']} ({'+' if above150 else '-'}{abs(sig['pct_above_ema150']):.1f}%)", "150-day Exponential Moving Average. Sits between the EMA100 and EMA200 in sensitivity.")}</span>
+      <span class="ema-pill ep-on">{tip(f"EMA200 ${sig['ema200']} (+{sig['pct_above_ema200']:.1f}%)", "200-day Exponential Moving Average. The core long-term trend line this entire scanner is built around &mdash; reclaiming it is the primary signal.")}</span>
     </div>
     <div class="signals">
-      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA200 ✓</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA200 &#x2713;</span></div>
       <div class="sig"><span class="dot {'dot-on' if above150 else 'dot-off'}"></span><span class="sig-lbl">EMA150</span></div>
       <div class="sig"><span class="dot {'dot-on' if above100 else 'dot-off'}"></span><span class="sig-lbl">EMA100</span></div>
-      <div class="sig"><span class="dot {flip_dot}"></span><span class="sig-lbl">RS FLIP</span></div>
-      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">CONSOLIDATION ✓</span></div>
+      <div class="sig"><span class="dot {flip_dot}"></span><span class="sig-lbl">{tip("RS FLIP", "Whether Relative Strength vs SPY has flipped from negative to positive (or swung sharply) in the last 25 days.")}</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">{tip("CONSOLIDATION &#x2713;", "Confirms price moved less than 20% in the 60 days before the reclaim &mdash; i.e. it was basing quietly, not already trending hard.")}</span></div>
     </div>
     <div class="drill-hint">{drill_hint}</div>
   </div>
