@@ -720,7 +720,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
   font-weight:400;line-height:1.5;color:var(--text);letter-spacing:0;
   text-transform:none;opacity:0;visibility:hidden;transition:opacity .15s,transform .15s;
   pointer-events:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.4);
-  text-align:left;white-space:normal;word-wrap:break-word}
+  text-align:left;white-space:normal !important;word-wrap:break-word;overflow-wrap:break-word}
 .tip-bubble::after{content:'';position:absolute;bottom:100%;left:50%;
   transform:translateX(-50%);border:5px solid transparent;border-bottom-color:var(--border)}
 @media (max-width: 768px){
