@@ -1074,6 +1074,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script data-goatcounter="https://sagitiko.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <style>{css}</style>
 </head>
 <body>
