@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Early Trend Scanner — Wednesday, July 15, 2026 at 06:24</title>
+<title>Early Trend Scanner — Wednesday, July 15, 2026 at 14:03</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -346,14 +346,14 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
       EMA200 reclaim · RS flip · Prior consolidation · Not extended · Click any ETF card → holdings drill-down
     </div>
   </div>
-  <div class="run-meta">Wednesday, July 15, 2026 at 06:24<br>Scanned: 81 ETFs<br>Signals: 0</div>
+  <div class="run-meta">Wednesday, July 15, 2026 at 14:03<br>Scanned: 81 ETFs<br>Signals: 4</div>
 </div>
 <div class="stats">
-  <div class="stat"><div class="stat-n n-bull">0</div> <div class="stat-l">Strict (100+150+200)</div></div>
-  <div class="stat"><div class="stat-n n-acc" >0</div><div class="stat-l">+Medium (200+150)</div></div>
-  <div class="stat"><div class="stat-n n-loose">0</div> <div class="stat-l">+Loose (200 only)</div></div>
-  <div class="stat"><div class="stat-n n-flip" >0</div>  <div class="stat-l">Clean RS (Relative Strength) Flips</div></div>
-  <div class="stat"><div class="stat-n n-acc"  >0</div><div class="stat-l">Fresh signals (5 days or less)</div></div>
+  <div class="stat"><div class="stat-n n-bull">2</div> <div class="stat-l">Strict (100+150+200)</div></div>
+  <div class="stat"><div class="stat-n n-acc" >3</div><div class="stat-l">+Medium (200+150)</div></div>
+  <div class="stat"><div class="stat-n n-loose">4</div> <div class="stat-l">+Loose (200 only)</div></div>
+  <div class="stat"><div class="stat-n n-flip" >3</div>  <div class="stat-l">Clean RS (Relative Strength) Flips</div></div>
+  <div class="stat"><div class="stat-n n-acc"  >2</div><div class="stat-l">Fresh signals (5 days or less)</div></div>
 </div>
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-btn-signals" onclick="switchTab('signals')">SIGNALS</button>
@@ -368,7 +368,175 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
   <button class="mode-btn" id="btn-loose"  onclick="setMode('loose')">LOOSE — above EMA200 only</button>
   <span class="mode-desc" id="mode-desc">Showing highest-conviction signals only</span>
 </div>
-<div id="results"><div class="cards"><div class="empty">No signals this week.<br>Market extended or in consolidation — stay patient.</div></div></div>
+<div id="results"><div class="section-group"><div class="section-label">Global / Regional</div><div class="cards"><div class="card" data-mode="medium150"
+  onclick="openModal('EWH', 'iShares MSCI Hong Kong', event)">
+  <div class="card-top">
+    <div class="card-head">
+      <div class="mscore-block mscore-high">
+      <div class="mscore-rank">#1</div>
+      <div class="mscore-num">70</div>
+      <div class="mscore-lbl"><span class="tip" tabindex="0">MOMENTUM<br>SCORE<span class="tip-bubble">A 0-100 composite score combining reclaim freshness, RS swing size, how extended the price is, EMA stack depth, base tightness, and breadth of qualifying holdings. Higher = stronger, fresher trend. ETFs are ranked by this score.</span></span></div>
+    </div>
+      <div class="ticker-block">
+        <div class="ticker">EWH</div>
+        <div class="ticker-name">iShares MSCI Hong Kong</div>
+        <span class="grp-tag">Global / Regional</span>
+      </div>
+      <div class="badges">
+        <span class="badge b-fresh"><span class="tip" tabindex="0">RECLAIM 0d AGO<span class="tip-bubble">Days since price first crossed back above the EMA200, after having been below it for at least 5 trading days. Fresher reclaims (lower numbers) suggest an earlier-stage trend.</span></span></span>
+        <span class="badge b-flip"><span class="tip" tabindex="0">RS FLIP &#x2713;<span class="tip-bubble">Relative Strength Flip: this ETF was underperforming SPY (the S&amp;P 500) 25 days ago and has since flipped to outperforming it &mdash; or swung by 4+ percentage points. A sign the trend is genuinely changing, not just drifting with the market.</span></span></span><span class="badge b-med"><span class="tip" tabindex="0">MEDIUM<span class="tip-bubble">Price is above EMA200 and EMA150, but may still be below EMA100. A moderate-conviction signal.</span></span></span>
+        <span class="badge b-ext"><span class="tip" tabindex="0">+0.0% FROM ENTRY<span class="tip-bubble">How far price has moved from the EMA200 reclaim point. Lower numbers mean the move is fresher and less extended &mdash; potentially more room left to run.</span></span></span>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="m"><div class="m-v">$22.15</div><div class="m-l">Price</div></div>
+      <div class="m"><div class="m-v pos">+0.3%</div><div class="m-l"><span class="tip" tabindex="0">RS vs SPY<span class="tip-bubble">Relative Strength vs SPY: this ETF's return minus SPY's return over the same window. Positive means it's outperforming the broad market, not just rising with it.</span></span></div></div>
+      <div class="m"><div class="m-v neg">-11.3%</div><div class="m-l"><span class="tip" tabindex="0">RS 25d Ago<span class="tip-bubble">What the Relative Strength reading was 25 trading days ago, for comparison against today's value &mdash; this is what flips from negative to positive in an RS Flip.</span></span></div></div>
+      <div class="m"><div class="m-v">$22.15</div><div class="m-l">Reclaim Price</div></div>
+      <div class="m"><div class="m-v hl">15.5%</div><div class="m-l"><span class="tip" tabindex="0">Prior Range<span class="tip-bubble">The price range (high vs low) in the 60 days before the EMA200 reclaim. A tighter range suggests a cleaner base before the breakout.</span></span></div></div>
+      <div class="m"><div class="m-v pos">+2.2%</div><div class="m-l">vs EMA200</div></div>
+    </div>
+    <div class="ema-stack">
+      <span class="ema-pill ep-off"><span class="tip" tabindex="0">EMA100 $22.15 (-0.0%)<span class="tip-bubble">100-day Exponential Moving Average. A medium-term trend reference &mdash; price above it is a bullish sign on that timeframe.</span></span></span>
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA150 $21.99 (+0.7%)<span class="tip-bubble">150-day Exponential Moving Average. Sits between the EMA100 and EMA200 in sensitivity.</span></span></span>
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA200 $21.68 (+2.2%)<span class="tip-bubble">200-day Exponential Moving Average. The core long-term trend line this entire scanner is built around &mdash; reclaiming it is the primary signal.</span></span></span>
+    </div>
+    <div class="signals">
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA200 &#x2713;</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA150</span></div>
+      <div class="sig"><span class="dot dot-off"></span><span class="sig-lbl">EMA100</span></div>
+      <div class="sig"><span class="dot dot-flip"></span><span class="sig-lbl"><span class="tip" tabindex="0">RS FLIP<span class="tip-bubble">Whether Relative Strength vs SPY has flipped from negative to positive (or swung sharply) in the last 25 days.</span></span></span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl"><span class="tip" tabindex="0">CONSOLIDATION &#x2713;<span class="tip-bubble">Confirms price moved less than 20% in the 60 days before the reclaim &mdash; i.e. it was basing quietly, not already trending hard.</span></span></span></div>
+    </div>
+    <div class="drill-hint">▶ &nbsp; 2 holdings in momentum — click to explore</div>
+  </div>
+</div></div></div><div class="section-group"><div class="section-label">Commodities</div><div class="cards"><div class="card" data-mode="strict"
+  onclick="openModal('MOO', 'VanEck Agribusiness', event)">
+  <div class="card-top">
+    <div class="card-head">
+      <div class="mscore-block mscore-mid">
+      <div class="mscore-rank">#2</div>
+      <div class="mscore-num">57</div>
+      <div class="mscore-lbl"><span class="tip" tabindex="0">MOMENTUM<br>SCORE<span class="tip-bubble">A 0-100 composite score combining reclaim freshness, RS swing size, how extended the price is, EMA stack depth, base tightness, and breadth of qualifying holdings. Higher = stronger, fresher trend. ETFs are ranked by this score.</span></span></div>
+    </div>
+      <div class="ticker-block">
+        <div class="ticker">MOO</div>
+        <div class="ticker-name">VanEck Agribusiness</div>
+        <span class="grp-tag">Commodities</span>
+      </div>
+      <div class="badges">
+        <span class="badge b-fresh"><span class="tip" tabindex="0">RECLAIM 12d AGO<span class="tip-bubble">Days since price first crossed back above the EMA200, after having been below it for at least 5 trading days. Fresher reclaims (lower numbers) suggest an earlier-stage trend.</span></span></span>
+        <span class="badge b-flip"><span class="tip" tabindex="0">RS FLIP &#x2713;<span class="tip-bubble">Relative Strength Flip: this ETF was underperforming SPY (the S&amp;P 500) 25 days ago and has since flipped to outperforming it &mdash; or swung by 4+ percentage points. A sign the trend is genuinely changing, not just drifting with the market.</span></span></span><span class="badge b-fresh"><span class="tip" tabindex="0">STRICT &#x2713;<span class="tip-bubble">Price is above EMA100, EMA150, and EMA200 simultaneously &mdash; the highest-conviction signal tier.</span></span></span>
+        <span class="badge b-ext"><span class="tip" tabindex="0">+2.6% FROM ENTRY<span class="tip-bubble">How far price has moved from the EMA200 reclaim point. Lower numbers mean the move is fresher and less extended &mdash; potentially more room left to run.</span></span></span>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="m"><div class="m-v">$81.38</div><div class="m-l">Price</div></div>
+      <div class="m"><div class="m-v pos">+1.5%</div><div class="m-l"><span class="tip" tabindex="0">RS vs SPY<span class="tip-bubble">Relative Strength vs SPY: this ETF's return minus SPY's return over the same window. Positive means it's outperforming the broad market, not just rising with it.</span></span></div></div>
+      <div class="m"><div class="m-v neg">-6.0%</div><div class="m-l"><span class="tip" tabindex="0">RS 25d Ago<span class="tip-bubble">What the Relative Strength reading was 25 trading days ago, for comparison against today's value &mdash; this is what flips from negative to positive in an RS Flip.</span></span></div></div>
+      <div class="m"><div class="m-v">$79.29</div><div class="m-l">Reclaim Price</div></div>
+      <div class="m"><div class="m-v hl">12.5%</div><div class="m-l"><span class="tip" tabindex="0">Prior Range<span class="tip-bubble">The price range (high vs low) in the 60 days before the EMA200 reclaim. A tighter range suggests a cleaner base before the breakout.</span></span></div></div>
+      <div class="m"><div class="m-v pos">+3.9%</div><div class="m-l">vs EMA200</div></div>
+    </div>
+    <div class="ema-stack">
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA100 $80.17 (+1.5%)<span class="tip-bubble">100-day Exponential Moving Average. A medium-term trend reference &mdash; price above it is a bullish sign on that timeframe.</span></span></span>
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA150 $79.32 (+2.6%)<span class="tip-bubble">150-day Exponential Moving Average. Sits between the EMA100 and EMA200 in sensitivity.</span></span></span>
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA200 $78.3 (+3.9%)<span class="tip-bubble">200-day Exponential Moving Average. The core long-term trend line this entire scanner is built around &mdash; reclaiming it is the primary signal.</span></span></span>
+    </div>
+    <div class="signals">
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA200 &#x2713;</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA150</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA100</span></div>
+      <div class="sig"><span class="dot dot-flip"></span><span class="sig-lbl"><span class="tip" tabindex="0">RS FLIP<span class="tip-bubble">Whether Relative Strength vs SPY has flipped from negative to positive (or swung sharply) in the last 25 days.</span></span></span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl"><span class="tip" tabindex="0">CONSOLIDATION &#x2713;<span class="tip-bubble">Confirms price moved less than 20% in the 60 days before the reclaim &mdash; i.e. it was basing quietly, not already trending hard.</span></span></span></div>
+    </div>
+    <div class="drill-hint">▶ &nbsp; 4 holdings in momentum — click to explore</div>
+  </div>
+</div><div class="card" data-mode="strict"
+  onclick="openModal('DBA', 'Invesco DB Agriculture Fund', event)">
+  <div class="card-top">
+    <div class="card-head">
+      <div class="mscore-block mscore-mid">
+      <div class="mscore-rank">#4</div>
+      <div class="mscore-num">53</div>
+      <div class="mscore-lbl"><span class="tip" tabindex="0">MOMENTUM<br>SCORE<span class="tip-bubble">A 0-100 composite score combining reclaim freshness, RS swing size, how extended the price is, EMA stack depth, base tightness, and breadth of qualifying holdings. Higher = stronger, fresher trend. ETFs are ranked by this score.</span></span></div>
+    </div>
+      <div class="ticker-block">
+        <div class="ticker">DBA</div>
+        <div class="ticker-name">Invesco DB Agriculture Fund</div>
+        <span class="grp-tag">Commodities</span>
+      </div>
+      <div class="badges">
+        <span class="badge b-fresh"><span class="tip" tabindex="0">RECLAIM 18d AGO<span class="tip-bubble">Days since price first crossed back above the EMA200, after having been below it for at least 5 trading days. Fresher reclaims (lower numbers) suggest an earlier-stage trend.</span></span></span>
+        <span class="badge b-flip"><span class="tip" tabindex="0">RS FLIP &#x2713;<span class="tip-bubble">Relative Strength Flip: this ETF was underperforming SPY (the S&amp;P 500) 25 days ago and has since flipped to outperforming it &mdash; or swung by 4+ percentage points. A sign the trend is genuinely changing, not just drifting with the market.</span></span></span><span class="badge b-fresh"><span class="tip" tabindex="0">STRICT &#x2713;<span class="tip-bubble">Price is above EMA100, EMA150, and EMA200 simultaneously &mdash; the highest-conviction signal tier.</span></span></span>
+        <span class="badge b-ext"><span class="tip" tabindex="0">+4.2% FROM ENTRY<span class="tip-bubble">How far price has moved from the EMA200 reclaim point. Lower numbers mean the move is fresher and less extended &mdash; potentially more room left to run.</span></span></span>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="m"><div class="m-v">$27.77</div><div class="m-l">Price</div></div>
+      <div class="m"><div class="m-v pos">+3.8%</div><div class="m-l"><span class="tip" tabindex="0">RS vs SPY<span class="tip-bubble">Relative Strength vs SPY: this ETF's return minus SPY's return over the same window. Positive means it's outperforming the broad market, not just rising with it.</span></span></div></div>
+      <div class="m"><div class="m-v neg">-6.3%</div><div class="m-l"><span class="tip" tabindex="0">RS 25d Ago<span class="tip-bubble">What the Relative Strength reading was 25 trading days ago, for comparison against today's value &mdash; this is what flips from negative to positive in an RS Flip.</span></span></div></div>
+      <div class="m"><div class="m-v">$26.66</div><div class="m-l">Reclaim Price</div></div>
+      <div class="m"><div class="m-v hl">9.5%</div><div class="m-l"><span class="tip" tabindex="0">Prior Range<span class="tip-bubble">The price range (high vs low) in the 60 days before the EMA200 reclaim. A tighter range suggests a cleaner base before the breakout.</span></span></div></div>
+      <div class="m"><div class="m-v pos">+4.5%</div><div class="m-l">vs EMA200</div></div>
+    </div>
+    <div class="ema-stack">
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA100 $26.96 (+3.0%)<span class="tip-bubble">100-day Exponential Moving Average. A medium-term trend reference &mdash; price above it is a bullish sign on that timeframe.</span></span></span>
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA150 $26.75 (+3.8%)<span class="tip-bubble">150-day Exponential Moving Average. Sits between the EMA100 and EMA200 in sensitivity.</span></span></span>
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA200 $26.58 (+4.5%)<span class="tip-bubble">200-day Exponential Moving Average. The core long-term trend line this entire scanner is built around &mdash; reclaiming it is the primary signal.</span></span></span>
+    </div>
+    <div class="signals">
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA200 &#x2713;</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA150</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA100</span></div>
+      <div class="sig"><span class="dot dot-flip"></span><span class="sig-lbl"><span class="tip" tabindex="0">RS FLIP<span class="tip-bubble">Whether Relative Strength vs SPY has flipped from negative to positive (or swung sharply) in the last 25 days.</span></span></span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl"><span class="tip" tabindex="0">CONSOLIDATION &#x2713;<span class="tip-bubble">Confirms price moved less than 20% in the 60 days before the reclaim &mdash; i.e. it was basing quietly, not already trending hard.</span></span></span></div>
+    </div>
+    <div class="drill-hint">▶ &nbsp; 5 holdings in momentum — click to explore</div>
+  </div>
+</div></div></div><div class="section-group"><div class="section-label">US Sectors</div><div class="cards"><div class="card" data-mode="loose"
+  onclick="openModal('XLC', 'Communication Services Select Sector', event)">
+  <div class="card-top">
+    <div class="card-head">
+      <div class="mscore-block mscore-mid">
+      <div class="mscore-rank">#3</div>
+      <div class="mscore-num">57</div>
+      <div class="mscore-lbl"><span class="tip" tabindex="0">MOMENTUM<br>SCORE<span class="tip-bubble">A 0-100 composite score combining reclaim freshness, RS swing size, how extended the price is, EMA stack depth, base tightness, and breadth of qualifying holdings. Higher = stronger, fresher trend. ETFs are ranked by this score.</span></span></div>
+    </div>
+      <div class="ticker-block">
+        <div class="ticker">XLC</div>
+        <div class="ticker-name">Communication Services Select Sector</div>
+        <span class="grp-tag">US Sectors</span>
+      </div>
+      <div class="badges">
+        <span class="badge b-fresh"><span class="tip" tabindex="0">RECLAIM 0d AGO<span class="tip-bubble">Days since price first crossed back above the EMA200, after having been below it for at least 5 trading days. Fresher reclaims (lower numbers) suggest an earlier-stage trend.</span></span></span>
+        <span class="badge b-loose"><span class="tip" tabindex="0">LOOSE<span class="tip-bubble">Price is only above EMA200. The broadest, lowest-conviction signal tier.</span></span></span>
+        <span class="badge b-ext"><span class="tip" tabindex="0">+0.0% FROM ENTRY<span class="tip-bubble">How far price has moved from the EMA200 reclaim point. Lower numbers mean the move is fresher and less extended &mdash; potentially more room left to run.</span></span></span>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="m"><div class="m-v">$112.75</div><div class="m-l">Price</div></div>
+      <div class="m"><div class="m-v neg">-0.8%</div><div class="m-l"><span class="tip" tabindex="0">RS vs SPY<span class="tip-bubble">Relative Strength vs SPY: this ETF's return minus SPY's return over the same window. Positive means it's outperforming the broad market, not just rising with it.</span></span></div></div>
+      <div class="m"><div class="m-v neg">-6.4%</div><div class="m-l"><span class="tip" tabindex="0">RS 25d Ago<span class="tip-bubble">What the Relative Strength reading was 25 trading days ago, for comparison against today's value &mdash; this is what flips from negative to positive in an RS Flip.</span></span></div></div>
+      <div class="m"><div class="m-v">$112.75</div><div class="m-l">Reclaim Price</div></div>
+      <div class="m"><div class="m-v hl">12.5%</div><div class="m-l"><span class="tip" tabindex="0">Prior Range<span class="tip-bubble">The price range (high vs low) in the 60 days before the EMA200 reclaim. A tighter range suggests a cleaner base before the breakout.</span></span></div></div>
+      <div class="m"><div class="m-v pos">+0.5%</div><div class="m-l">vs EMA200</div></div>
+    </div>
+    <div class="ema-stack">
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA100 $112.74 (+0.0%)<span class="tip-bubble">100-day Exponential Moving Average. A medium-term trend reference &mdash; price above it is a bullish sign on that timeframe.</span></span></span>
+      <span class="ema-pill ep-off"><span class="tip" tabindex="0">EMA150 $112.76 (-0.0%)<span class="tip-bubble">150-day Exponential Moving Average. Sits between the EMA100 and EMA200 in sensitivity.</span></span></span>
+      <span class="ema-pill ep-on"><span class="tip" tabindex="0">EMA200 $112.24 (+0.5%)<span class="tip-bubble">200-day Exponential Moving Average. The core long-term trend line this entire scanner is built around &mdash; reclaiming it is the primary signal.</span></span></span>
+    </div>
+    <div class="signals">
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA200 &#x2713;</span></div>
+      <div class="sig"><span class="dot dot-off"></span><span class="sig-lbl">EMA150</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA100</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl"><span class="tip" tabindex="0">RS FLIP<span class="tip-bubble">Whether Relative Strength vs SPY has flipped from negative to positive (or swung sharply) in the last 25 days.</span></span></span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl"><span class="tip" tabindex="0">CONSOLIDATION &#x2713;<span class="tip-bubble">Confirms price moved less than 20% in the 60 days before the reclaim &mdash; i.e. it was basing quietly, not already trending hard.</span></span></span></div>
+    </div>
+    <div class="drill-hint">▶ &nbsp; 3 holdings in momentum — click to explore</div>
+  </div>
+</div></div></div></div>
 <div class="methodology">
   <strong>ETF Signal conditions (all required):</strong><br>
   1. <strong>Above EMA200</strong> — current price above EMA200<br>
@@ -400,7 +568,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 </tr><tr>
   <td><span class="u-ticker">XLC</span></td>
   <td><span class="u-name">Communication Services Select Sector</span></td>
-  <td><span class="u-flag-none">—</span></td>
+  <td><span class="u-flag u-flag-loose">LOOSE</span></td>
   <td><span class="u-holdings">10 holdings mapped</span></td>
 </tr><tr>
   <td><span class="u-ticker">XLE</span></td>
@@ -563,7 +731,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 </tr><tr>
   <td><span class="u-ticker">EWH</span></td>
   <td><span class="u-name">iShares MSCI Hong Kong</span></td>
-  <td><span class="u-flag-none">—</span></td>
+  <td><span class="u-flag u-flag-medium">MEDIUM</span></td>
   <td><span class="u-holdings">10 holdings mapped</span></td>
 </tr><tr>
   <td><span class="u-ticker">INDA</span></td>
@@ -616,12 +784,12 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 </tr><tr>
   <td><span class="u-ticker">DBA</span></td>
   <td><span class="u-name">Invesco DB Agriculture Fund</span></td>
-  <td><span class="u-flag-none">—</span></td>
+  <td><span class="u-flag u-flag-strict">STRICT</span></td>
   <td><span class="u-holdings">10 holdings mapped</span></td>
 </tr><tr>
   <td><span class="u-ticker">MOO</span></td>
   <td><span class="u-name">VanEck Agribusiness</span></td>
-  <td><span class="u-flag-none">—</span></td>
+  <td><span class="u-flag u-flag-strict">STRICT</span></td>
   <td><span class="u-holdings">10 holdings mapped</span></td>
 </tr></tbody>
   </table>
@@ -921,16 +1089,16 @@ function setMode(mode){
 }
 
 // ?? Spark data (embedded at generation time) ?????????????????????????????????
-const SPARK_DATA = {};
+const SPARK_DATA = {"META": {"price": [100.0, 99.69, 100.57, 98.25, 100.61, 101.15, 100.06, 99.73, 91.21, 90.73, 90.98, 90.17, 91.35, 91.94, 90.87, 89.26, 89.88, 91.91, 92.18, 91.55, 91.1, 89.82, 90.18, 90.53, 90.96, 91.27, 94.69, 94.69, 94.28, 89.5, 89.08, 92.86, 93.54, 88.39, 87.25, 87.13, 85.11, 84.73, 84.51, 88.54, 89.54, 84.68, 86.12, 84.12, 83.87, 83.2, 80.99, 82.09, 83.93, 84.04, 91.44, 86.96, 89.56, 91.84, 89.98, 94.21, 99.84, 97.98, 98.62, 99.1], "ema20": [94.08, 94.61, 95.18, 95.47, 95.96, 96.46, 96.8, 97.08, 96.52, 95.97, 95.49, 94.99, 94.64, 94.38, 94.05, 93.59, 93.24, 93.11, 93.02, 92.88, 92.71, 92.44, 92.22, 92.06, 91.96, 91.89, 92.16, 92.4, 92.58, 92.28, 91.98, 92.06, 92.2, 91.84, 91.4, 91.0, 90.44, 89.89, 89.38, 89.3, 89.32, 88.88, 88.62, 88.19, 87.78, 87.34, 86.74, 86.29, 86.07, 85.88, 86.41, 86.46, 86.75, 87.24, 87.5, 88.14, 89.25, 90.08, 90.9, 91.68], "ema50": [93.91, 94.14, 94.39, 94.54, 94.78, 95.03, 95.23, 95.4, 95.24, 95.06, 94.9, 94.72, 94.58, 94.48, 94.34, 94.14, 93.97, 93.89, 93.82, 93.73, 93.63, 93.48, 93.35, 93.24, 93.15, 93.08, 93.14, 93.2, 93.24, 93.1, 92.94, 92.94, 92.96, 92.78, 92.56, 92.35, 92.07, 91.78, 91.49, 91.38, 91.31, 91.05, 90.85, 90.59, 90.33, 90.05, 89.69, 89.39, 89.18, 88.98, 89.07, 88.99, 89.01, 89.12, 89.16, 89.36, 89.77, 90.09, 90.42, 90.76], "ema200": [98.85, 98.85, 98.87, 98.86, 98.88, 98.9, 98.92, 98.92, 98.85, 98.77, 98.69, 98.6, 98.53, 98.47, 98.39, 98.3, 98.22, 98.15, 98.09, 98.03, 97.96, 97.88, 97.8, 97.73, 97.66, 97.6, 97.57, 97.54, 97.51, 97.43, 97.35, 97.3, 97.26, 97.18, 97.08, 96.98, 96.86, 96.74, 96.62, 96.54, 96.47, 96.35, 96.25, 96.13, 96.01, 95.88, 95.73, 95.59, 95.48, 95.36, 95.33, 95.24, 95.19, 95.15, 95.1, 95.09, 95.14, 95.17, 95.2, 95.24]}, "GOOGL": {"price": [100.0, 98.75, 97.25, 99.31, 99.18, 100.8, 102.53, 102.37, 102.42, 112.62, 112.88, 112.17, 113.68, 116.49, 116.48, 117.3, 113.74, 113.37, 117.84, 117.38, 116.13, 116.17, 113.46, 113.82, 113.46, 112.08, 113.81, 113.8, 114.18, 111.31, 110.15, 105.9, 105.07, 108.93, 107.86, 106.39, 106.67, 104.36, 104.77, 105.33, 108.16, 109.3, 106.53, 107.78, 102.4, 101.36, 101.12, 100.65, 98.8, 103.57, 104.65, 105.78, 105.4, 107.32, 107.48, 105.99, 105.1, 104.6, 103.23, 106.97], "ema20": [92.24, 92.86, 93.28, 93.85, 94.36, 94.97, 95.69, 96.33, 96.91, 98.41, 99.78, 100.96, 102.17, 103.54, 104.77, 105.96, 106.71, 107.34, 108.34, 109.2, 109.86, 110.46, 110.75, 111.04, 111.27, 111.35, 111.58, 111.79, 112.02, 111.95, 111.78, 111.22, 110.64, 110.47, 110.22, 109.86, 109.56, 109.06, 108.65, 108.34, 108.32, 108.41, 108.23, 108.19, 107.64, 107.04, 106.48, 105.92, 105.25, 105.09, 105.04, 105.11, 105.14, 105.35, 105.55, 105.59, 105.55, 105.46, 105.24, 105.41], "ema50": [90.81, 91.12, 91.37, 91.68, 91.97, 92.32, 92.72, 93.1, 93.46, 94.21, 94.95, 95.62, 96.33, 97.12, 97.88, 98.64, 99.23, 99.79, 100.49, 101.16, 101.74, 102.31, 102.75, 103.18, 103.58, 103.92, 104.31, 104.68, 105.05, 105.3, 105.49, 105.5, 105.49, 105.62, 105.71, 105.74, 105.77, 105.72, 105.68, 105.67, 105.76, 105.9, 105.93, 106.0, 105.86, 105.68, 105.5, 105.31, 105.06, 105.0, 104.99, 105.02, 105.03, 105.12, 105.21, 105.24, 105.24, 105.21, 105.14, 105.21], "ema200": [81.3, 81.48, 81.63, 81.81, 81.98, 82.17, 82.37, 82.57, 82.77, 83.07, 83.36, 83.65, 83.95, 84.27, 84.59, 84.92, 85.21, 85.49, 85.81, 86.12, 86.42, 86.72, 86.98, 87.25, 87.51, 87.75, 88.01, 88.27, 88.53, 88.75, 88.97, 89.14, 89.29, 89.49, 89.67, 89.84, 90.01, 90.15, 90.3, 90.44, 90.62, 90.81, 90.96, 91.13, 91.24, 91.34, 91.44, 91.53, 91.6, 91.72, 91.85, 91.99, 92.12, 92.28, 92.43, 92.56, 92.69, 92.81, 92.91, 93.05]}, "EA": {"price": [100.0, 99.77, 99.86, 99.48, 99.35, 99.43, 99.32, 99.36, 99.43, 99.28, 99.15, 99.01, 98.89, 98.51, 98.54, 98.34, 98.23, 98.21, 98.21, 98.5, 98.43, 98.64, 98.96, 98.9, 99.04, 98.6, 98.68, 98.55, 98.78, 99.06, 99.2, 99.2, 99.51, 99.88, 99.69, 99.79, 99.43, 99.79, 99.71, 99.82, 99.75, 99.7, 99.7, 99.27, 99.67, 99.94, 100.43, 100.54, 100.79, 100.69, 100.69, 100.89, 100.77, 100.77, 100.89, 100.62, 101.44, 101.36, 101.33, 101.33], "ema20": [99.45, 99.48, 99.52, 99.51, 99.5, 99.49, 99.48, 99.47, 99.46, 99.45, 99.42, 99.38, 99.33, 99.25, 99.19, 99.1, 99.02, 98.94, 98.87, 98.84, 98.8, 98.78, 98.8, 98.81, 98.83, 98.81, 98.8, 98.77, 98.77, 98.8, 98.84, 98.87, 98.93, 99.02, 99.09, 99.15, 99.18, 99.24, 99.28, 99.33, 99.37, 99.4, 99.43, 99.42, 99.44, 99.49, 99.58, 99.67, 99.78, 99.86, 99.94, 100.03, 100.1, 100.17, 100.24, 100.27, 100.38, 100.48, 100.56, 100.63], "ema50": [99.09, 99.12, 99.15, 99.16, 99.17, 99.18, 99.18, 99.19, 99.2, 99.2, 99.2, 99.19, 99.18, 99.15, 99.13, 99.1, 99.07, 99.03, 99.0, 98.98, 98.96, 98.95, 98.95, 98.94, 98.95, 98.93, 98.92, 98.91, 98.9, 98.91, 98.92, 98.93, 98.96, 98.99, 99.02, 99.05, 99.06, 99.09, 99.12, 99.14, 99.17, 99.19, 99.21, 99.21, 99.23, 99.26, 99.3, 99.35, 99.41, 99.46, 99.51, 99.56, 99.61, 99.65, 99.7, 99.74, 99.8, 99.87, 99.92, 99.98], "ema200": [93.42, 93.48, 93.54, 93.6, 93.66, 93.72, 93.77, 93.83, 93.88, 93.94, 93.99, 94.04, 94.09, 94.13, 94.18, 94.22, 94.26, 94.3, 94.34, 94.38, 94.42, 94.46, 94.5, 94.55, 94.59, 94.63, 94.67, 94.71, 94.75, 94.79, 94.84, 94.88, 94.93, 94.98, 95.02, 95.07, 95.11, 95.16, 95.21, 95.25, 95.3, 95.34, 95.38, 95.42, 95.46, 95.51, 95.56, 95.61, 95.66, 95.71, 95.76, 95.81, 95.86, 95.91, 95.96, 96.0, 96.06, 96.11, 96.16, 96.21]}, "0005.HK": {"price": [100.0, 100.49, 101.55, 101.77, 99.72, 98.94, 99.08, 99.36, 99.65, 99.08, 101.34, 96.11, 99.29, 101.13, 98.02, 99.79, 97.95, 99.72, 99.85, 99.07, 98.14, 99.71, 98.57, 100.7, 102.26, 103.4, 104.18, 103.26, 103.12, 103.97, 104.61, 104.4, 104.04, 100.77, 101.13, 100.98, 96.15, 98.43, 101.48, 103.61, 103.76, 105.18, 105.89, 105.11, 105.67, 105.32, 105.39, 104.96, 104.89, 105.11, 106.24, 108.02, 108.02, 108.94, 107.95, 108.23, 109.09, 109.3, 108.45, 110.37], "ema20": [95.03, 95.55, 96.12, 96.66, 96.95, 97.14, 97.33, 97.52, 97.72, 97.85, 98.18, 97.99, 98.11, 98.4, 98.36, 98.5, 98.45, 98.57, 98.69, 98.73, 98.67, 98.77, 98.75, 98.94, 99.25, 99.65, 100.08, 100.38, 100.64, 100.96, 101.31, 101.6, 101.83, 101.73, 101.67, 101.61, 101.09, 100.84, 100.9, 101.16, 101.4, 101.76, 102.16, 102.44, 102.75, 102.99, 103.22, 103.39, 103.53, 103.68, 103.92, 104.31, 104.67, 105.07, 105.35, 105.62, 105.95, 106.27, 106.48, 106.85], "ema50": [92.24, 92.56, 92.91, 93.26, 93.52, 93.73, 93.94, 94.15, 94.37, 94.55, 94.82, 94.87, 95.04, 95.28, 95.39, 95.56, 95.65, 95.81, 95.97, 96.09, 96.17, 96.31, 96.4, 96.57, 96.79, 97.05, 97.33, 97.56, 97.78, 98.02, 98.28, 98.52, 98.74, 98.82, 98.91, 98.99, 98.88, 98.86, 98.96, 99.15, 99.33, 99.56, 99.8, 100.01, 100.23, 100.43, 100.63, 100.8, 100.96, 101.12, 101.32, 101.59, 101.84, 102.12, 102.34, 102.58, 102.83, 103.08, 103.3, 103.57], "ema200": [81.6, 81.79, 81.98, 82.18, 82.36, 82.52, 82.68, 82.85, 83.02, 83.18, 83.36, 83.49, 83.64, 83.82, 83.96, 84.12, 84.25, 84.41, 84.56, 84.71, 84.84, 84.99, 85.12, 85.28, 85.45, 85.62, 85.81, 85.98, 86.15, 86.33, 86.51, 86.69, 86.86, 87.0, 87.14, 87.28, 87.37, 87.48, 87.62, 87.78, 87.94, 88.11, 88.28, 88.45, 88.62, 88.79, 88.95, 89.11, 89.27, 89.43, 89.6, 89.78, 89.96, 90.15, 90.33, 90.5, 90.69, 90.87, 91.05, 91.24]}, "0388.HK": {"price": [100.0, 100.73, 102.1, 101.96, 100.88, 100.73, 100.83, 99.76, 102.74, 100.93, 101.57, 102.35, 103.08, 104.5, 103.82, 104.11, 103.72, 103.72, 103.67, 101.91, 100.34, 100.34, 100.64, 99.71, 100.15, 99.27, 98.43, 96.97, 97.85, 97.94, 100.44, 100.2, 98.09, 97.01, 94.66, 93.98, 93.73, 91.53, 93.15, 94.66, 94.47, 93.83, 91.73, 92.41, 90.8, 90.85, 89.72, 88.64, 89.82, 88.84, 89.97, 91.78, 92.12, 91.97, 93.2, 93.1, 94.22, 94.86, 95.2, 96.28], "ema20": [98.85, 99.03, 99.32, 99.57, 99.7, 99.8, 99.9, 99.88, 100.16, 100.23, 100.36, 100.55, 100.79, 101.14, 101.4, 101.66, 101.85, 102.03, 102.19, 102.16, 101.99, 101.83, 101.72, 101.52, 101.39, 101.19, 100.93, 100.55, 100.29, 100.07, 100.1, 100.11, 99.92, 99.64, 99.17, 98.68, 98.21, 97.57, 97.15, 96.91, 96.68, 96.41, 95.96, 95.62, 95.16, 94.75, 94.27, 93.74, 93.36, 92.93, 92.65, 92.57, 92.53, 92.47, 92.54, 92.59, 92.75, 92.95, 93.17, 93.46], "ema50": [99.12, 99.18, 99.3, 99.4, 99.46, 99.51, 99.56, 99.57, 99.69, 99.74, 99.81, 99.91, 100.04, 100.21, 100.35, 100.5, 100.63, 100.75, 100.86, 100.9, 100.88, 100.86, 100.85, 100.81, 100.78, 100.72, 100.63, 100.49, 100.38, 100.29, 100.29, 100.29, 100.2, 100.08, 99.87, 99.64, 99.4, 99.1, 98.86, 98.7, 98.53, 98.35, 98.09, 97.87, 97.59, 97.32, 97.03, 96.7, 96.43, 96.13, 95.89, 95.73, 95.59, 95.44, 95.36, 95.27, 95.23, 95.21, 95.21, 95.25], "ema200": [100.47, 100.47, 100.49, 100.51, 100.51, 100.51, 100.51, 100.51, 100.53, 100.53, 100.54, 100.56, 100.59, 100.63, 100.66, 100.69, 100.72, 100.75, 100.78, 100.79, 100.79, 100.78, 100.78, 100.77, 100.76, 100.75, 100.73, 100.69, 100.66, 100.63, 100.63, 100.63, 100.6, 100.57, 100.51, 100.44, 100.38, 100.29, 100.22, 100.16, 100.11, 100.04, 99.96, 99.89, 99.79, 99.71, 99.61, 99.5, 99.4, 99.3, 99.2, 99.13, 99.06, 98.99, 98.93, 98.87, 98.83, 98.79, 98.75, 98.73]}, "ADM": {"price": [100.0, 101.98, 104.16, 103.57, 104.46, 103.27, 105.22, 108.59, 110.78, 111.19, 111.78, 113.77, 118.12, 116.38, 115.65, 115.84, 119.09, 120.42, 123.64, 121.43, 119.93, 120.69, 118.42, 116.44, 115.79, 116.39, 117.13, 119.44, 120.18, 119.79, 124.05, 123.81, 126.29, 125.18, 121.5, 120.45, 120.3, 122.04, 118.47, 120.48, 119.02, 117.15, 114.86, 112.76, 114.55, 113.87, 112.73, 114.92, 115.3, 115.42, 114.71, 115.03, 115.3, 117.01, 117.42, 120.55, 118.59, 120.73, 123.18, 123.56], "ema20": [104.26, 104.04, 104.05, 104.01, 104.05, 103.98, 104.09, 104.52, 105.12, 105.7, 106.28, 106.99, 108.05, 108.84, 109.49, 110.1, 110.95, 111.85, 112.98, 113.78, 114.37, 114.97, 115.3, 115.41, 115.44, 115.53, 115.69, 116.04, 116.44, 116.76, 117.45, 118.06, 118.84, 119.45, 119.64, 119.72, 119.77, 119.99, 119.84, 119.9, 119.82, 119.57, 119.12, 118.51, 118.14, 117.73, 117.25, 117.03, 116.87, 116.73, 116.54, 116.39, 116.29, 116.36, 116.46, 116.85, 117.01, 117.37, 117.92, 118.46], "ema50": [102.73, 102.7, 102.76, 102.79, 102.86, 102.87, 102.96, 103.19, 103.48, 103.79, 104.1, 104.48, 105.01, 105.46, 105.86, 106.25, 106.75, 107.29, 107.93, 108.46, 108.91, 109.37, 109.73, 109.99, 110.22, 110.46, 110.72, 111.06, 111.42, 111.75, 112.23, 112.69, 113.22, 113.69, 113.99, 114.25, 114.49, 114.78, 114.93, 115.14, 115.3, 115.37, 115.35, 115.25, 115.22, 115.17, 115.07, 115.07, 115.07, 115.09, 115.07, 115.07, 115.08, 115.16, 115.24, 115.45, 115.58, 115.78, 116.07, 116.36], "ema200": [92.78, 92.87, 92.98, 93.09, 93.2, 93.3, 93.42, 93.57, 93.74, 93.91, 94.09, 94.29, 94.53, 94.74, 94.95, 95.16, 95.4, 95.65, 95.92, 96.18, 96.41, 96.66, 96.87, 97.07, 97.25, 97.44, 97.64, 97.86, 98.08, 98.3, 98.55, 98.8, 99.08, 99.34, 99.56, 99.76, 99.97, 100.19, 100.37, 100.57, 100.75, 100.92, 101.06, 101.17, 101.31, 101.43, 101.54, 101.68, 101.81, 101.95, 102.07, 102.2, 102.33, 102.48, 102.63, 102.81, 102.96, 103.14, 103.34, 103.54]}, "CTVA": {"price": [100.0, 100.07, 98.83, 99.18, 99.39, 98.92, 98.32, 98.85, 100.9, 100.7, 101.74, 104.5, 101.84, 98.48, 101.05, 103.16, 102.86, 103.81, 103.75, 102.39, 100.98, 98.38, 98.14, 98.44, 99.09, 98.51, 99.5, 100.39, 97.5, 96.97, 96.83, 97.12, 96.7, 96.16, 94.7, 93.64, 92.95, 93.45, 95.05, 94.51, 95.96, 96.59, 98.11, 98.45, 98.76, 99.98, 101.89, 103.14, 104.08, 105.72, 104.29, 107.11, 107.85, 108.29, 106.33, 104.69, 106.96, 107.45, 106.0, 103.83], "ema20": [101.87, 101.7, 101.42, 101.21, 101.04, 100.83, 100.59, 100.43, 100.47, 100.49, 100.61, 100.98, 101.07, 100.82, 100.84, 101.06, 101.23, 101.48, 101.7, 101.76, 101.69, 101.37, 101.07, 100.82, 100.65, 100.45, 100.36, 100.36, 100.09, 99.79, 99.51, 99.28, 99.04, 98.76, 98.37, 97.92, 97.45, 97.07, 96.88, 96.65, 96.59, 96.59, 96.73, 96.89, 97.07, 97.35, 97.78, 98.29, 98.84, 99.5, 99.95, 100.64, 101.32, 101.99, 102.4, 102.62, 103.03, 103.45, 103.69, 103.71], "ema50": [98.69, 98.75, 98.75, 98.77, 98.79, 98.8, 98.78, 98.78, 98.86, 98.94, 99.05, 99.26, 99.36, 99.33, 99.39, 99.54, 99.67, 99.83, 99.99, 100.08, 100.12, 100.05, 99.97, 99.91, 99.88, 99.83, 99.82, 99.84, 99.75, 99.64, 99.53, 99.43, 99.33, 99.2, 99.02, 98.81, 98.58, 98.38, 98.25, 98.11, 98.02, 97.96, 97.97, 97.99, 98.02, 98.1, 98.24, 98.44, 98.66, 98.94, 99.14, 99.46, 99.79, 100.12, 100.36, 100.53, 100.79, 101.05, 101.24, 101.34], "ema200": [91.1, 91.19, 91.27, 91.35, 91.43, 91.5, 91.57, 91.64, 91.73, 91.82, 91.92, 92.05, 92.14, 92.21, 92.3, 92.4, 92.51, 92.62, 92.73, 92.83, 92.91, 92.96, 93.01, 93.07, 93.13, 93.18, 93.24, 93.32, 93.36, 93.39, 93.43, 93.46, 93.5, 93.52, 93.53, 93.54, 93.53, 93.53, 93.54, 93.55, 93.58, 93.61, 93.65, 93.7, 93.75, 93.81, 93.89, 93.98, 94.09, 94.2, 94.3, 94.43, 94.56, 94.7, 94.81, 94.91, 95.03, 95.16, 95.26, 95.35]}, "CF": {"price": [100.0, 102.89, 107.66, 108.68, 111.46, 107.32, 109.72, 108.55, 112.51, 110.22, 108.88, 111.72, 113.63, 106.28, 105.32, 102.08, 110.47, 115.72, 111.38, 109.13, 111.6, 111.58, 113.94, 109.87, 108.44, 108.45, 106.18, 103.67, 103.81, 100.11, 100.96, 101.12, 103.9, 104.72, 101.13, 97.53, 96.75, 97.36, 94.95, 97.56, 95.26, 94.09, 94.32, 91.72, 92.32, 91.04, 91.86, 94.0, 94.19, 93.92, 96.47, 96.38, 98.5, 100.87, 102.42, 104.28, 101.6, 104.19, 107.75, 104.7], "ema20": [108.9, 108.33, 108.27, 108.31, 108.61, 108.48, 108.6, 108.6, 108.97, 109.09, 109.07, 109.32, 109.73, 109.4, 109.02, 108.35, 108.56, 109.24, 109.44, 109.41, 109.62, 109.81, 110.2, 110.17, 110.0, 109.86, 109.51, 108.95, 108.46, 107.67, 107.03, 106.46, 106.22, 106.08, 105.61, 104.84, 104.07, 103.43, 102.62, 102.14, 101.48, 100.78, 100.16, 99.36, 98.69, 97.96, 97.38, 97.06, 96.79, 96.51, 96.51, 96.5, 96.69, 97.09, 97.59, 98.23, 98.55, 99.09, 99.91, 100.37], "ema50": [102.12, 102.15, 102.37, 102.62, 102.96, 103.13, 103.39, 103.6, 103.94, 104.19, 104.38, 104.66, 105.02, 105.06, 105.07, 104.96, 105.17, 105.59, 105.81, 105.94, 106.17, 106.38, 106.67, 106.8, 106.86, 106.93, 106.9, 106.77, 106.65, 106.4, 106.18, 105.99, 105.9, 105.86, 105.67, 105.35, 105.02, 104.72, 104.33, 104.07, 103.72, 103.34, 102.99, 102.55, 102.15, 101.71, 101.33, 101.04, 100.77, 100.5, 100.34, 100.19, 100.12, 100.15, 100.24, 100.4, 100.45, 100.59, 100.87, 101.02], "ema200": [86.52, 86.68, 86.89, 87.11, 87.35, 87.55, 87.77, 87.98, 88.22, 88.44, 88.64, 88.87, 89.12, 89.29, 89.45, 89.58, 89.78, 90.04, 90.25, 90.44, 90.65, 90.86, 91.09, 91.28, 91.45, 91.62, 91.76, 91.88, 92.0, 92.08, 92.17, 92.26, 92.37, 92.5, 92.58, 92.63, 92.67, 92.72, 92.74, 92.79, 92.81, 92.83, 92.84, 92.83, 92.83, 92.81, 92.8, 92.81, 92.82, 92.83, 92.87, 92.91, 92.96, 93.04, 93.13, 93.24, 93.33, 93.44, 93.58, 93.69]}, "NTR": {"price": [100.0, 102.11, 100.53, 101.43, 100.56, 101.69, 102.44, 104.16, 106.79, 105.69, 106.53, 108.53, 103.71, 96.08, 96.01, 100.17, 101.14, 100.17, 99.68, 100.55, 100.63, 100.59, 98.51, 98.69, 98.54, 98.27, 96.57, 97.86, 96.32, 97.75, 96.25, 96.68, 96.95, 94.42, 94.53, 93.23, 91.37, 92.12, 95.01, 92.92, 92.01, 90.32, 88.32, 87.47, 86.47, 84.83, 85.65, 85.68, 85.96, 89.25, 90.13, 92.24, 91.51, 92.61, 94.65, 91.55, 92.77, 95.85, 97.32, 96.63], "ema20": [103.96, 103.78, 103.47, 103.28, 103.02, 102.89, 102.85, 102.97, 103.34, 103.56, 103.84, 104.29, 104.24, 103.46, 102.75, 102.5, 102.37, 102.16, 101.93, 101.8, 101.68, 101.58, 101.29, 101.04, 100.8, 100.56, 100.18, 99.96, 99.61, 99.44, 99.13, 98.9, 98.71, 98.31, 97.95, 97.5, 96.91, 96.46, 96.32, 96.0, 95.62, 95.11, 94.46, 93.8, 93.1, 92.31, 91.68, 91.11, 90.62, 90.49, 90.45, 90.62, 90.71, 90.89, 91.25, 91.28, 91.42, 91.84, 92.36, 92.77], "ema50": [102.52, 102.5, 102.43, 102.39, 102.31, 102.29, 102.3, 102.37, 102.54, 102.67, 102.82, 103.04, 103.07, 102.79, 102.53, 102.44, 102.38, 102.3, 102.19, 102.13, 102.07, 102.01, 101.88, 101.75, 101.63, 101.49, 101.3, 101.17, 100.98, 100.85, 100.67, 100.51, 100.37, 100.14, 99.92, 99.66, 99.33, 99.05, 98.89, 98.66, 98.4, 98.08, 97.7, 97.3, 96.87, 96.4, 95.98, 95.57, 95.2, 94.96, 94.77, 94.67, 94.55, 94.47, 94.48, 94.37, 94.3, 94.36, 94.48, 94.56], "ema200": [92.24, 92.34, 92.42, 92.51, 92.59, 92.68, 92.78, 92.89, 93.03, 93.15, 93.29, 93.44, 93.54, 93.57, 93.59, 93.66, 93.73, 93.8, 93.85, 93.92, 93.99, 94.05, 94.1, 94.14, 94.19, 94.23, 94.25, 94.29, 94.31, 94.34, 94.36, 94.38, 94.41, 94.41, 94.41, 94.4, 94.37, 94.35, 94.35, 94.34, 94.31, 94.28, 94.22, 94.15, 94.07, 93.98, 93.9, 93.82, 93.74, 93.69, 93.66, 93.64, 93.62, 93.61, 93.62, 93.6, 93.59, 93.62, 93.65, 93.68]}, "CORN": {"price": [100.0, 100.72, 101.28, 101.45, 101.84, 101.78, 103.12, 104.57, 104.96, 104.12, 105.24, 106.52, 105.4, 102.73, 102.73, 103.68, 104.51, 105.46, 105.74, 103.23, 101.06, 104.4, 104.4, 102.62, 102.01, 102.28, 101.28, 100.28, 101.45, 99.89, 99.72, 98.66, 97.33, 95.99, 95.04, 94.82, 94.93, 95.1, 93.15, 93.59, 93.93, 94.32, 95.54, 94.43, 93.43, 93.26, 92.59, 94.43, 93.93, 91.75, 93.31, 94.43, 93.93, 97.21, 98.22, 96.55, 96.1, 97.38, 97.77, 98.58], "ema20": [100.78, 100.78, 100.83, 100.88, 100.98, 101.05, 101.25, 101.57, 101.89, 102.1, 102.4, 102.79, 103.04, 103.01, 102.98, 103.05, 103.19, 103.41, 103.63, 103.59, 103.35, 103.45, 103.54, 103.45, 103.31, 103.22, 103.03, 102.77, 102.64, 102.38, 102.13, 101.8, 101.37, 100.86, 100.31, 99.78, 99.32, 98.92, 98.37, 97.91, 97.53, 97.23, 97.07, 96.82, 96.49, 96.19, 95.84, 95.71, 95.54, 95.18, 95.0, 94.95, 94.85, 95.07, 95.37, 95.49, 95.54, 95.72, 95.91, 96.17], "ema50": [100.53, 100.54, 100.57, 100.6, 100.65, 100.7, 100.79, 100.94, 101.1, 101.22, 101.37, 101.58, 101.73, 101.76, 101.8, 101.88, 101.98, 102.12, 102.26, 102.3, 102.25, 102.33, 102.41, 102.42, 102.41, 102.4, 102.36, 102.27, 102.24, 102.15, 102.06, 101.92, 101.74, 101.52, 101.26, 101.01, 100.77, 100.55, 100.26, 100.0, 99.76, 99.55, 99.39, 99.19, 98.97, 98.74, 98.5, 98.34, 98.17, 97.92, 97.74, 97.61, 97.46, 97.45, 97.48, 97.45, 97.39, 97.39, 97.41, 97.45], "ema200": [99.56, 99.57, 99.59, 99.6, 99.63, 99.65, 99.68, 99.73, 99.78, 99.83, 99.88, 99.95, 100.0, 100.03, 100.05, 100.09, 100.13, 100.19, 100.24, 100.27, 100.28, 100.32, 100.36, 100.38, 100.4, 100.42, 100.43, 100.43, 100.44, 100.43, 100.42, 100.41, 100.38, 100.33, 100.28, 100.22, 100.17, 100.12, 100.05, 99.99, 99.93, 99.87, 99.83, 99.78, 99.71, 99.65, 99.58, 99.53, 99.47, 99.39, 99.33, 99.28, 99.23, 99.21, 99.2, 99.17, 99.14, 99.13, 99.11, 99.11]}};
 
 // -- ETF's own price series (for overlay-on-stock-chart) --
-const ETF_SPARK_DATA = {};
+const ETF_SPARK_DATA = {"XLC": [100.0, 98.66, 99.27, 98.85, 97.3, 97.52, 97.47, 97.09, 98.11, 98.29, 97.77, 97.37, 98.82, 98.85, 98.48, 97.33, 97.57, 98.32, 98.62, 97.75, 98.51, 97.56, 97.77, 97.77, 97.23, 97.31, 97.9, 98.25, 97.42, 97.36, 95.64, 94.38, 95.25, 94.04, 93.55, 93.88, 93.48, 94.42, 94.02, 94.48, 94.59, 91.96, 92.17, 90.22, 90.57, 89.95, 89.14, 89.65, 91.08, 90.45, 92.65, 92.53, 93.05, 93.73, 92.42, 93.3, 94.26, 94.21, 94.1, 95.2], "EWH": [100.0, 100.21, 99.19, 100.13, 99.11, 99.53, 99.4, 99.15, 99.4, 101.07, 101.32, 99.87, 101.02, 103.92, 103.71, 103.45, 103.62, 103.03, 104.6, 104.05, 102.51, 102.13, 100.77, 101.75, 101.53, 100.09, 99.45, 98.42, 98.3, 98.47, 98.04, 98.72, 97.19, 95.95, 92.97, 93.1, 91.99, 91.1, 93.23, 93.74, 94.69, 94.08, 92.39, 92.13, 92.35, 91.44, 91.57, 91.44, 91.31, 91.23, 90.58, 91.18, 90.62, 91.92, 91.23, 91.4, 91.83, 93.09, 92.22, 95.9], "MOO": [100.0, 100.6, 99.8, 99.8, 99.82, 98.64, 98.63, 98.52, 98.33, 100.68, 100.12, 100.46, 101.54, 101.14, 97.99, 98.05, 98.35, 99.22, 98.88, 98.43, 97.45, 97.99, 97.29, 97.32, 96.61, 96.39, 96.27, 96.6, 96.42, 95.41, 95.26, 95.77, 96.23, 96.35, 94.38, 93.18, 93.5, 92.72, 93.58, 94.37, 93.98, 93.64, 92.81, 92.41, 92.34, 91.91, 92.65, 95.21, 95.12, 94.92, 95.1, 94.85, 97.15, 97.79, 97.15, 97.11, 96.49, 97.23, 97.84, 97.63], "DBA": [100.0, 100.26, 100.93, 100.78, 101.78, 101.75, 102.41, 103.86, 104.42, 104.12, 104.42, 105.09, 105.39, 104.23, 103.27, 103.9, 105.24, 106.13, 106.72, 104.94, 103.38, 104.75, 105.05, 103.9, 102.56, 102.38, 102.04, 102.04, 102.45, 101.23, 101.19, 100.74, 99.78, 99.15, 98.07, 97.81, 97.62, 97.81, 97.7, 97.47, 97.99, 99.03, 99.7, 98.92, 99.0, 98.81, 98.66, 100.0, 99.55, 98.48, 99.07, 99.78, 99.33, 102.3, 102.34, 102.6, 102.93, 103.16, 102.97, 103.19]};
 
 // Overlay toggle state -- defaults to ON
 let showEtfOverlay = true;
 
 // ?? Holdings data (embedded at generation time) ??????????????????????????????
-const HOLDINGS_DATA = {};
+const HOLDINGS_DATA = {"XLC": [{"price": 664.23, "p1w": 5.2, "p1m": 11.9, "p3m": -1.0, "pct_from_52w": -15.6, "near_52w": false, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 614.5, "ema50": 608.38, "ema200": 638.39, "rs_1m": 15.2, "score": 6, "ticker": "META", "name": "Meta Platforms"}, {"price": 365.28, "p1w": 0.9, "p1m": 1.6, "p3m": 9.8, "pct_from_52w": -9.2, "near_52w": true, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 359.94, "ema50": 359.26, "ema200": 317.74, "rs_1m": -0.5, "score": 5, "ticker": "GOOGL", "name": "Alphabet A"}, {"price": 206.34, "p1w": 0.7, "p1m": 1.5, "p3m": 1.8, "pct_from_52w": -0.1, "near_52w": true, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 204.92, "ema50": 203.59, "ema200": 195.93, "rs_1m": -0.5, "score": 5, "ticker": "EA", "name": "Electronic Arts"}], "EWH": [{"price": 155.3, "p1w": 2.0, "p1m": 6.5, "p3m": 10.8, "pct_from_52w": 0.0, "near_52w": true, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 150.35, "ema50": 145.74, "ema200": 128.39, "rs_1m": 9.5, "score": 6, "ticker": "0005.HK", "name": "HSBC HK"}, {"price": 393.4, "p1w": 3.4, "p1m": 1.7, "p3m": -3.4, "pct_from_52w": -12.7, "near_52w": false, "above_ema20": true, "above_ema50": true, "above_ema200": false, "ema20": 381.89, "ema50": 389.21, "ema200": 403.4, "rs_1m": 2.6, "score": 4, "ticker": "0388.HK", "name": "HK Exchange"}], "MOO": [{"price": 82.29, "p1w": 2.5, "p1m": 2.6, "p3m": 20.3, "pct_from_52w": -2.2, "near_52w": true, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 78.89, "ema50": 77.5, "ema200": 68.96, "rs_1m": 0.5, "score": 6, "ticker": "ADM", "name": "Archer-Daniels-Midland"}, {"price": 83.14, "p1w": -0.9, "p1m": 9.8, "p3m": 2.5, "pct_from_52w": -4.2, "near_52w": true, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 83.07, "ema50": 81.18, "ema200": 76.38, "rs_1m": 7.2, "score": 5, "ticker": "CTVA", "name": "Corteva"}, {"price": 117.41, "p1w": 0.3, "p1m": 7.2, "p3m": -0.9, "pct_from_52w": -14.3, "near_52w": false, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 112.63, "ema50": 113.37, "ema200": 105.14, "rs_1m": 5.2, "score": 5, "ticker": "CF", "name": "CF Industries"}, {"price": 68.15, "p1w": 5.6, "p1m": 4.0, "p3m": -6.2, "pct_from_52w": -17.5, "near_52w": false, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 65.43, "ema50": 66.7, "ema200": 66.07, "rs_1m": -0.3, "score": 5, "ticker": "NTR", "name": "Nutrien"}], "DBA": [{"price": 82.29, "p1w": 2.5, "p1m": 2.6, "p3m": 20.3, "pct_from_52w": -2.2, "near_52w": true, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 78.89, "ema50": 77.5, "ema200": 68.96, "rs_1m": 0.5, "score": 6, "ticker": "ADM", "name": "Archer-Daniels-Midland"}, {"price": 83.17, "p1w": -0.8, "p1m": 9.9, "p3m": 2.5, "pct_from_52w": -4.1, "near_52w": true, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 83.07, "ema50": 81.18, "ema200": 76.38, "rs_1m": 7.2, "score": 5, "ticker": "CTVA", "name": "Corteva"}, {"price": 117.5, "p1w": 0.4, "p1m": 7.3, "p3m": -0.8, "pct_from_52w": -14.3, "near_52w": false, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 112.64, "ema50": 113.37, "ema200": 105.14, "rs_1m": 5.3, "score": 5, "ticker": "CF", "name": "CF Industries"}, {"price": 17.69, "p1w": 2.1, "p1m": 5.3, "p3m": -0.4, "pct_from_52w": -7.5, "near_52w": true, "above_ema20": true, "above_ema50": true, "above_ema200": false, "ema20": 17.26, "ema50": 17.49, "ema200": 17.79, "rs_1m": 3.3, "score": 5, "ticker": "CORN", "name": "Teucrium Corn"}, {"price": 68.15, "p1w": 5.6, "p1m": 4.0, "p3m": -6.2, "pct_from_52w": -17.5, "near_52w": false, "above_ema20": true, "above_ema50": true, "above_ema200": true, "ema20": 65.43, "ema50": 66.7, "ema200": 66.07, "rs_1m": -0.3, "score": 5, "ticker": "NTR", "name": "Nutrien"}]};
 
 // ?? Modal state ??????????????????????????????????????????????????????????????
 let activeEtf = null;
