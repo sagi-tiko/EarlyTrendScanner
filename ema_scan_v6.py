@@ -7,12 +7,215 @@ Early Trend Scanner v3.0
 - Per-holding metrics: momentum score, EMA stack, RS vs SPY, 1W/1M/3M perf, 52W high proximity
 - Click holding card → mini sparkline chart + stats overlay
 """
-
+ 
 import os, sys, json
 from datetime import datetime, timedelta
 import yfinance as yf
 import pandas as pd
-
+ 
+# ── Translations (UI text only — tickers, company names, prices stay as-is) ──
+T = {
+    "en": {
+        "page_title": "Early Trend Scanner",
+        "h1_main": "EARLY TREND",
+        "h1_em": "DETECTOR",
+        "subtitle": "EMA200 reclaim &middot; RS flip &middot; Prior consolidation &middot; Not extended &middot; Click any ETF card &rarr; holdings drill-down",
+        "scanned": "Scanned",
+        "etfs": "ETFs",
+        "signals": "Signals",
+        "stat_strict": "Strict (100+150+200)",
+        "stat_medium": "+Medium (200+150)",
+        "stat_loose": "+Loose (200 only)",
+        "stat_rsflips": "Clean RS (Relative Strength) Flips",
+        "stat_fresh": "Fresh signals (5 days or less)",
+        "tab_signals": "SIGNALS",
+        "tab_universe": "ETF UNIVERSE",
+        "ema_filter_label": "EMA Filter:",
+        "btn_strict": "STRICT &mdash; above EMA100 + EMA150 + EMA200",
+        "btn_medium": "MEDIUM &mdash; above EMA200 + EMA150 only",
+        "btn_loose": "LOOSE &mdash; above EMA200 only",
+        "mode_desc_strict": "Showing highest-conviction signals only",
+        "mode_desc_medium": "Showing signals above EMA200 + EMA150 (may be below EMA100)",
+        "mode_desc_loose": "Showing all EMA200 reclaims — includes assets still below EMA100/150",
+        "tip_strict": "Price is above EMA100, EMA150, and EMA200 simultaneously &mdash; the highest-conviction signal tier.",
+        "tip_medium": "Price is above EMA200 and EMA150, but may still be below EMA100. A moderate-conviction signal.",
+        "tip_loose": "Price is only above EMA200. The broadest, lowest-conviction signal tier.",
+        "tip_rsflip": "Relative Strength Flip: this ETF was underperforming SPY (the S&amp;P 500) 25 days ago and has since flipped to outperforming it &mdash; or swung by 4+ percentage points. A sign the trend is genuinely changing, not just drifting with the market.",
+        "tip_reclaim": "Days since price first crossed back above the EMA200, after having been below it for at least 5 trading days. Fresher reclaims (lower numbers) suggest an earlier-stage trend.",
+        "tip_fromentry": "How far price has moved from the EMA200 reclaim point. Lower numbers mean the move is fresher and less extended &mdash; potentially more room left to run.",
+        "tip_rsvsspy": "Relative Strength vs SPY: this ETF's return minus SPY's return over the same window. Positive means it's outperforming the broad market, not just rising with it.",
+        "tip_rs25d": "What the Relative Strength reading was 25 trading days ago, for comparison against today's value &mdash; this is what flips from negative to positive in an RS Flip.",
+        "tip_priorrange": "The price range (high vs low) in the 60 days before the EMA200 reclaim. A tighter range suggests a cleaner base before the breakout.",
+        "tip_ema100": "100-day Exponential Moving Average. A medium-term trend reference &mdash; price above it is a bullish sign on that timeframe.",
+        "tip_ema150": "150-day Exponential Moving Average. Sits between the EMA100 and EMA200 in sensitivity.",
+        "tip_ema200": "200-day Exponential Moving Average. The core long-term trend line this entire scanner is built around &mdash; reclaiming it is the primary signal.",
+        "tip_rsflip_dot": "Whether Relative Strength vs SPY has flipped from negative to positive (or swung sharply) in the last 25 days.",
+        "tip_consolidation": "Confirms price moved less than 20% in the 60 days before the reclaim &mdash; i.e. it was basing quietly, not already trending hard.",
+        "tip_momentum": "A 0-100 composite score combining reclaim freshness, RS swing size, how extended the price is, EMA stack depth, base tightness, and breadth of qualifying holdings. Higher = stronger, fresher trend. ETFs are ranked by this score.",
+        "lbl_price": "Price",
+        "lbl_rsvsspy": "RS vs SPY",
+        "lbl_rs25d": "RS 25d Ago",
+        "lbl_reclaimprice": "Reclaim Price",
+        "lbl_priorrange": "Prior Range",
+        "lbl_vsema200": "vs EMA200",
+        "badge_strict": "STRICT &#x2713;",
+        "u_strict": "STRICT",
+        "badge_medium": "MEDIUM",
+        "badge_loose": "LOOSE",
+        "badge_rsflip": "RS FLIP &#x2713;",
+        "badge_reclaim": "RECLAIM {days}d AGO",
+        "badge_fromentry": "+{pct}% FROM ENTRY",
+        "sig_ema200": "EMA200 &#x2713;",
+        "sig_ema150": "EMA150",
+        "sig_ema100": "EMA100",
+        "sig_rsflip": "RS FLIP",
+        "sig_consolidation": "CONSOLIDATION &#x2713;",
+        "drill_hint_n": "&#9654; &nbsp; {n} holdings in momentum &mdash; click to explore",
+        "drill_hint_none": "&#9654; &nbsp; No holdings currently in momentum",
+        "mscore_label": "MOMENTUM<br>SCORE",
+        "modal_list_title": "Holdings ranked by momentum",
+        "modal_empty_detail": "&larr; Select a holding to see details &amp; chart",
+        "modal_no_holdings": "No holdings in momentum.<br>All top holdings have negative 1W or 1M performance.",
+        "detail_1w": "1 Week",
+        "detail_momentum_lbl": "Momentum",
+        "chart_show_etf_prefix": "Show ",
+        "detail_1m": "1 Month",
+        "detail_3m": "3 Month",
+        "detail_rsvsspy": "RS vs SPY",
+        "tip_detail_rsvsspy": "Relative Strength: this stock's 1-month return minus SPY's 1-month return. Positive means it's beating the broad market, not just rising with it.",
+        "tip_detail_ema20": "20-day Exponential Moving Average. The shortest-term trend reference used here &mdash; price above it suggests near-term momentum.",
+        "tip_detail_ema50": "50-day Exponential Moving Average. A medium-term trend reference, between EMA20 and EMA200.",
+        "tip_detail_ema200": "200-day Exponential Moving Average. The long-term trend line &mdash; the entire scanner is built around stocks/ETFs reclaiming this level.",
+        "chart_title": "6-Month Price Chart",
+        "chart_show_etf": "Show {etf}",
+        "chart_60d_ago": "6 months ago",
+        "chart_today": "Today",
+        "w52h": "vs 52W high",
+        "universe_hint": "Full ETF universe scanned each run. To add a new ETF, insert it into the TICKERS dict in the scanner script and add its top holdings to the HOLDINGS dict.",
+        "universe_th_ticker": "Ticker",
+        "universe_th_name": "Name",
+        "universe_th_signal": "Signal",
+        "universe_th_holdings": "Holdings",
+        "universe_holdings_mapped": "{n} holdings mapped",
+        "methodology_title": "ETF Signal conditions (all required):",
+        "methodology_1": "<strong>Above EMA200</strong> &mdash; current price above EMA200",
+        "methodology_2": "<strong>EMA200 Reclaim</strong> &mdash; crossed above EMA200 within last 20 trading days (was below &ge; 5 days prior)",
+        "methodology_3": "<strong>EMA200 Slope</strong> &mdash; EMA200 is flat or rising (not in a downtrend)",
+        "methodology_4": "<strong>Not Extended</strong> &mdash; price within 20% of reclaim point",
+        "methodology_5": "<strong>RS Improving</strong> &mdash; RS vs SPY was negative 25d ago, positive now (or 4pp+ swing)",
+        "methodology_6": "<strong>Prior Consolidation</strong> &mdash; price moved less than 20% in 60 days before reclaim",
+        "methodology_score_title": "Holdings momentum score (0-10):",
+        "methodology_score_body": "1W &gt;0% +1 &middot; 1W &gt;3% +1 &middot; 1M &gt;5% +1 &middot; 1M &gt;15% +1 &middot; 3M &gt;15% +1 &middot; 3M &gt;30% +1 &middot; Above EMA20 +1 &middot; Above EMA50 +1 &middot; Above EMA200 +1 &middot; Within 10% of 52W High +1",
+        "footer": "Data: Yahoo Finance &middot; Not investment advice &middot; Do your own research",
+        "empty_no_signals": "No signals this week.<br>Market extended or in consolidation &mdash; stay patient.",
+        "lang_toggle": "&#x5e2;&#x5d1;&#x5e8;&#x5d9;&#x5ea;",
+        "lang_toggle_href": "../",
+    },
+    "he": {
+        "page_title": "&#x5e1;&#x5d5;&#x5e8;&#x5e7; &#x5de;&#x5d2;&#x5de;&#x5d5;&#x5ea; &#x5de;&#x5d5;&#x5e7;&#x5d3;&#x5de;&#x5d5;&#x5ea;",
+        "h1_main": "&#x5d2;&#x5d9;&#x5dc;&#x5d5;&#x5d9; &#x5de;&#x5d2;&#x5de;&#x5d4;",
+        "h1_em": "&#x5de;&#x5d5;&#x5e7;&#x5d3;&#x5de;&#x5ea;",
+        "subtitle": "&#x5d7;&#x5d6;&#x5d5;&#x5e8; &#x5dc;EMA200 &middot; &#x5d4;&#x5d9;&#x5e4;&#x5d5;&#x5da; RS &middot; &#x5e7;&#x5d5;&#x5e0;&#x5e1;&#x5d5;&#x5dc;&#x5d9;&#x5d3;&#x5e6;&#x5d9;&#x5d4; &#x5e7;&#x5d5;&#x5d3;&#x5de;&#x5ea; &middot; &#x5dc;&#x5d0; &#x5de;&#x5d5;&#x5e8;&#x5d7;&#x5d1; &middot; &#x5dc;&#x5d7;&#x5d9;&#x5e6;&#x5d4; &#x5e2;&#x5dc; &#x5db;&#x5e8;&#x5d8;&#x5d9;&#x5e1; ETF &larr; &#x5e6;&#x5dc;&#x5d9;&#x5dc;&#x5d4; &#x5dc;&#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea;",
+        "scanned": "&#x5e0;&#x5e1;&#x5e8;&#x5e7;&#x5d5;",
+        "etfs": "&#x5e7;&#x5e8;&#x5e0;&#x5d5;&#x5ea;",
+        "signals": "&#x5d0;&#x5d9;&#x5ea;&#x5d5;&#x5ea;",
+        "stat_strict": "&#x5de;&#x5d5;&#x5d2;&#x5d1;&#x5e8; (100+150+200)",
+        "stat_medium": "+&#x5d1;&#x5d9;&#x5e0;&#x5d5;&#x5e0;&#x5d9;&#x5d9;&#x5dd; (200+150)",
+        "stat_loose": "+&#x5e8;&#x5d5;&#x5d0;&#x5d4; (200 &#x5dc;&#x5d1;&#x5d3;)",
+        "stat_rsflips": "&#x5d4;&#x5d9;&#x5e4;&#x5d5;&#x5db;&#x5d9; RS (&#x5e2;&#x5d5;&#x5e6;&#x5de;&#x5d4; &#x5d9;&#x5d7;&#x5e1;&#x5d9;&#x5ea;) &#x5e0;&#x5e7;&#x5d9;&#x5d9;&#x5dd;",
+        "stat_fresh": "&#x5d0;&#x5d9;&#x5ea;&#x5d5;&#x5ea; &#x5d8;&#x5e8;&#x5d9;&#x5d5;&#x5ea; (5 &#x5d9;&#x5de;&#x5d9;&#x5dd; &#x5d0;&#x5d5; &#x5e4;&#x5d7;&#x5d5;&#x5ea;)",
+        "tab_signals": "&#x5d0;&#x5d9;&#x5ea;&#x5d5;&#x5ea;",
+        "tab_universe": "&#x5db;&#x5dc; &#x5d4;&#x5e7;&#x5e8;&#x5e0;&#x5d5;&#x5ea;",
+        "ema_filter_label": ":&#x5e4;&#x5d9;&#x5dc;&#x5d8;&#x5e8; EMA",
+        "btn_strict": "&#x5de;&#x5d5;&#x5d2;&#x5d1;&#x5e8; &mdash; &#x5de;&#x5e2;&#x5dc; EMA100 + EMA150 + EMA200",
+        "btn_medium": "&#x5d1;&#x5d9;&#x5e0;&#x5d5;&#x5e0;&#x5d9;&#x5d9;&#x5dd; &mdash; &#x5de;&#x5e2;&#x5dc; EMA200 + EMA150 &#x5d1;&#x5dc;&#x5d1;&#x5d3;",
+        "btn_loose": "&#x5e8;&#x5d5;&#x5d0;&#x5d4; &mdash; &#x5de;&#x5e2;&#x5dc; EMA200 &#x5d1;&#x5dc;&#x5d1;&#x5d3;",
+        "mode_desc_strict": "&#x5de;&#x5e6;&#x5d9;&#x5d2; &#x5e8;&#x5e7; &#x5d0;&#x5d9;&#x5ea;&#x5d5;&#x5ea; &#x5d1;&#x5e8;&#x5de;&#x5d4; &#x5d4;&#x5d2;&#x5d1;&#x5d5;&#x5d4; &#x5d1;&#x5d9;&#x5d5;&#x5ea;&#x5e8;",
+        "mode_desc_medium": "&#x5de;&#x5e6;&#x5d9;&#x5d2; &#x5d0;&#x5d9;&#x5ea;&#x5d5;&#x5ea; &#x5de;&#x5e2;&#x5dc; EMA200 + EMA150 (&#x5d9;&#x5ea;&#x5db;&#x5df; &#x5dc;&#x5d4;&#x5d9;&#x5d5;&#x5ea; &#x5de;&#x5ea;&#x5d7;&#x5ea; &#x5dc;-EMA100)",
+        "mode_desc_loose": "&#x5de;&#x5e6;&#x5d9;&#x5d2; &#x5d0;&#x5ea; &#x5db;&#x5dc; &#x5d7;&#x5d6;&#x5e8;&#x5d5;&#x5ea; EMA200 &mdash; &#x5db;&#x5d5;&#x5dc;&#x5dc; &#x5e0;&#x5db;&#x5e1;&#x5d9;&#x5dd; &#x5e9;&#x5e2;&#x5d3;&#x5d9;&#x5d9;&#x5df; &#x5de;&#x5ea;&#x5d7;&#x5ea; &#x5dc;-EMA100/150",
+        "tip_strict": "&#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5de;&#x5e2;&#x5dc; EMA100, EMA150 &#x5d5;-EMA200 &#x5d1;&#x5de;&#x5e7;&#x5d1;&#x5d9;&#x5dc; &mdash; &#x5e8;&#x5de;&#x5ea; &#x5d4;&#x5d1;&#x5d9;&#x5d5;&#x5e0;&#x5d4; &#x5d4;&#x5d2;&#x5d1;&#x5d5;&#x5d4; &#x5d1;&#x5d9;&#x5d5;&#x5ea;&#x5e8;.",
+        "tip_medium": "&#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5de;&#x5e2;&#x5dc; EMA200 &#x5d5;-EMA150, &#x5d0;&#x5da; &#x5d9;&#x5d9;&#x5ea;&#x5db;&#x5df; &#x5dc;&#x5d4;&#x5d9;&#x5d5;&#x5ea; &#x5de;&#x5ea;&#x5d7;&#x5ea; &#x5dc;-EMA100. &#x5d0;&#x5d5;&#x5ea; &#x5d1;&#x5d9;&#x5e0;&#x5d5;&#x5e0;&#x5d9;&#x5ea; &#x5d1;&#x5d9;&#x5e0;&#x5d5;&#x5e0;&#x5d9;&#x5ea;.",
+        "tip_loose": "&#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5e8;&#x5e7; &#x5de;&#x5e2;&#x5dc; EMA200. &#x5e8;&#x5de;&#x5ea; &#x5d4;&#x5d1;&#x5d9;&#x5d5;&#x5e0;&#x5d4; &#x5d4;&#x5e0;&#x5de;&#x5d5;&#x5db;&#x5d4; &#x5d5;&#x5d4;&#x5e8;&#x5d7;&#x5d1;&#x5d4; &#x5d1;&#x5d9;&#x5d5;&#x5ea;&#x5e8;.",
+        "tip_rsflip": "&#x5d4;&#x5d9;&#x5e4;&#x5d5;&#x5da; &#x5e2;&#x5d5;&#x5e6;&#x5de;&#x5d4; &#x5d9;&#x5d7;&#x5e1;&#x5d9;&#x5ea;: &#x5d4;&#x5e7;&#x5e8;&#x5df; &#x5d4;&#x5d6;&#x5d4; &#x5e4;&#x5d9;&#x5d2;&#x5e8; &#x5d0;&#x5d7;&#x5e8;&#x5d9; SPY (&#x5de;&#x5d3;&#x5d3; S&amp;P 500) &#x5dc;&#x5e4;&#x5e0;&#x5d9; 25 &#x5d9;&#x5de;&#x5d9;&#x5dd; &#x5d5;&#x5de;&#x5d0;&#x5d6; &#x5d4;&#x5e4;&#x5da; &#x5dc;&#x5d4;&#x5e6;&#x5d9;&#x5d2; &#x5d1;&#x5d9;&#x5e6;&#x5d5;&#x5e2; &#x5e2;&#x5d3;&#x5d9;&#x5e3; &mdash; &#x5d0;&#x5d5; &#x5e0;&#x5e2; &#x5d1;-4 &#x5e0;&#x5e7;&#x5d5;&#x5d3;&#x5d5;&#x5ea; &#x5d0;&#x5d7;&#x5d5;&#x5d6;. &#x5e1;&#x5d9;&#x5de;&#x5df; &#x5dc;&#x5e9;&#x5d9;&#x5e0;&#x5d5;&#x5d9; &#x5de;&#x5d2;&#x5de;&#x5d4; &#x5d0;&#x5de;&#x5d9;&#x5ea;&#x5d9;.",
+        "tip_reclaim": "&#x5de;&#x5e1;&#x5e4;&#x5e8; &#x5d4;&#x5d9;&#x5de;&#x5d9;&#x5dd; &#x5de;&#x5d0;&#x5d6; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5d7;&#x5e6;&#x5d4; &#x5d1;&#x5e4;&#x5e2;&#x5dd; &#x5d4;&#x5e8;&#x5d0;&#x5e9;&#x5d5;&#x5e0;&#x5d4; &#x5de;&#x5e2;&#x5dc; EMA200, &#x5dc;&#x5d0;&#x5d7;&#x5e8; &#x5e9;&#x5d4;&#x5d9;&#x5d4; &#x5de;&#x5ea;&#x5d7;&#x5ea;&#x5d9;&#x5d5; &#x5dc;&#x5e4;&#x5d7;&#x5d5;&#x5ea; 5 &#x5d9;&#x5de;&#x5d9; &#x5de;&#x5e1;&#x5d7;&#x5e8;. &#x5d7;&#x5d6;&#x5d5;&#x5e8; &#x5d8;&#x5e8;&#x5d9; &#x5d9;&#x5d5;&#x5ea;&#x5e8; (&#x5de;&#x5e1;&#x5e4;&#x5e8; &#x5e0;&#x5de;&#x5d5;&#x5da;) &#x5de;&#x5e8;&#x5de;&#x5d6; &#x5e2;&#x5dc; &#x5de;&#x5d2;&#x5de;&#x5d4; &#x5d1;&#x5e9;&#x5dc;&#x5d1; &#x5de;&#x5d5;&#x5e7;&#x5d3;&#x5dd; &#x5d9;&#x5d5;&#x5ea;&#x5e8;.",
+        "tip_fromentry": "&#x5db;&#x5de;&#x5d4; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5e0;&#x5e2; &#x5de;&#x5e0;&#x5e7;&#x5d5;&#x5d3;&#x5ea; &#x5d4;&#x5d7;&#x5d6;&#x5d5;&#x5e8; &#x5e9;&#x5dc; EMA200. &#x5de;&#x5e1;&#x5e4;&#x5e8;&#x5d9;&#x5dd; &#x5e0;&#x5de;&#x5d5;&#x5db;&#x5d9;&#x5dd; &#x5d9;&#x5d5;&#x5ea;&#x5e8; &#x5de;&#x5e1;&#x5de;&#x5e0;&#x5d9;&#x5dd; &#x5e2;&#x5dc; &#x5de;&#x5d2;&#x5de;&#x5d4; &#x5d8;&#x5e8;&#x5d9;&#x5d4; &#x5d9;&#x5d5;&#x5ea;&#x5e8; &#x5d5;&#x5e4;&#x5d7;&#x5d5;&#x5ea; &#x5de;&#x5d5;&#x5d8;&#x5d5;&#x5d8; &mdash; &#x5d0;&#x5d5;&#x5dc;&#x5d9; &#x5e2;&#x5d5;&#x5d3; &#x5de;&#x5e7;&#x5d5;&#x5dd; &#x5dc;&#x5e8;&#x5d5;&#x5e5;.",
+        "tip_rsvsspy": "&#x5e2;&#x5d5;&#x5e6;&#x5de;&#x5d4; &#x5d9;&#x5d7;&#x5e1;&#x5d9;&#x5ea; &#x5de;&#x5d5;&#x5dc; SPY: &#x5d4;&#x5ea;&#x5e9;&#x5d5;&#x5d0;&#x5d4; &#x5e9;&#x5dc; &#x5d4;&#x5e7;&#x5e8;&#x5df; &#x5d4;&#x5d6;&#x5d4; &#x5e4;&#x5d7;&#x5d5;&#x5ea; &#x5d4;&#x5ea;&#x5e9;&#x5d5;&#x5d0;&#x5d4; &#x5e9;&#x5dc; SPY &#x5d1;&#x5d0;&#x5d5;&#x5ea;&#x5d5; &#x5d7;&#x5dc;&#x5d5;&#x5df; &#x5d6;&#x5de;&#x5df;. &#x5d7;&#x5d9;&#x5d5;&#x5d1; &#x5de;&#x5e9;&#x5de;&#x5e2;&#x5d5; &#x5e9;&#x5d4;&#x5d5;&#x5d0; &#x5de;&#x5e6;&#x5d8;&#x5d9;&#x5d9;&#x5df; &#x5d1;&#x5d4;&#x5e6;&#x5dc;&#x5d7;&#x5d4; &#x5d0;&#x5ea; &#x5d4;&#x5e9;&#x5d5;&#x5e7;, &#x5dc;&#x5d0; &#x5e8;&#x5e7; &#x5e2;&#x5d5;&#x5dc;&#x5d4; &#x5d9;&#x5d7;&#x5d3; &#x5d0;&#x5d9;&#x5ea;&#x5d5;.",
+        "tip_rs25d": "&#x5de;&#x5d4;&#x5d9; &#x5d4;&#x5d9;&#x5d4; &#x5e2;&#x5e8;&#x5da; &#x5d4;&#x5e2;&#x5d5;&#x5e6;&#x5de;&#x5d4; &#x5d4;&#x5d9;&#x5d7;&#x5e1;&#x5d9;&#x5ea; &#x5dc;&#x5e4;&#x5e0;&#x5d9; 25 &#x5d9;&#x5de;&#x5d9; &#x5de;&#x5e1;&#x5d7;&#x5e8;, &#x5dc;&#x5e6;&#x5d5;&#x5e8;&#x5da; &#x5d4;&#x5e9;&#x5d5;&#x5d5;&#x5d0;&#x5d4; &#x5dc;&#x5e2;&#x5e8;&#x5da; &#x5d4;&#x5d9;&#x5d5;&#x5dd; &mdash; &#x5d6;&#x5d4;&#x5d5; &#x5de;&#x5d4; &#x5e9;&#x5de;&#x5d4;&#x5e4;&#x5da; &#x5de;&#x5e9;&#x5dc;&#x5d9;&#x5dc;&#x5d9; &#x5dc;&#x5d7;&#x5d9;&#x5d5;&#x5d1;&#x5d9; &#x5d1;&#x5d4;&#x5d9;&#x5e4;&#x5d5;&#x5da; RS.",
+        "tip_priorrange": "&#x5d8;&#x5d5;&#x5d5;&#x5d7; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; (&#x5d2;&#x5d1;&#x5d5;&#x5d4; &#x5de;&#x5d5;&#x5dc; &#x5e0;&#x5de;&#x5d5;&#x5da;) &#x5d1;-60 &#x5d4;&#x5d9;&#x5de;&#x5d9;&#x5dd; &#x5e9;&#x5dc;&#x5e4;&#x5e0;&#x5d9; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5e9;&#x5dc; EMA200. &#x5d8;&#x5d5;&#x5d5;&#x5d7; &#x5e6;&#x5e4;&#x5d5;&#x5e3; &#x5d9;&#x5d5;&#x5ea;&#x5e8; &#x5de;&#x5e8;&#x5de;&#x5d6; &#x5e2;&#x5dc; &#x5d1;&#x5e1;&#x5d9;&#x5e1; &#x5e0;&#x5e7;&#x5d9; &#x5d9;&#x5d5;&#x5ea;&#x5e8; &#x5dc;&#x5e4;&#x5e0;&#x5d9; &#x5d4;&#x5e4;&#x5e8;&#x5d9;&#x5e6;&#x5d4;.",
+        "tip_ema100": "&#x5de;&#x5de;&#x5d5;&#x5e6;&#x5e2; &#x5e0;&#x5e2; &#x5de;&#x5e2;&#x5e8;&#x5db;&#x5d9; &#x5e9;&#x5dc; 100 &#x5d9;&#x5d5;&#x5dd;. &#x5d0;&#x5d9;&#x5e0;&#x5d3;&#x5d9;&#x5e7;&#x5d8;&#x5d5;&#x5e8; &#x5de;&#x5d2;&#x5de;&#x5d4; &#x5d1;&#x5d9;&#x5e0;&#x5d9;&#x5d9;&#x5dd; &mdash; &#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5de;&#x5e2;&#x5dc;&#x5d9;&#x5d5; &#x5d4;&#x5d5;&#x5d0; &#x5e1;&#x5d9;&#x5de;&#x5df; &#x5d7;&#x5d9;&#x5d5;&#x5d1;&#x5d9; &#x5d1;&#x5d8;&#x5d5;&#x5d5;&#x5d7; &#x5d6;&#x5de;&#x5df; &#x5d6;&#x5d4;.",
+        "tip_ema150": "&#x5de;&#x5de;&#x5d5;&#x5e6;&#x5e2; &#x5e0;&#x5e2; &#x5de;&#x5e2;&#x5e8;&#x5db;&#x5d9; &#x5e9;&#x5dc; 150 &#x5d9;&#x5d5;&#x5dd;. &#x5e0;&#x5de;&#x5e6;&#x5d0; &#x5d1;&#x5d9;&#x5df; EMA100 &#x5dc;-EMA200 &#x5d1;&#x5e8;&#x5d2;&#x5d9;&#x5e9;&#x5d5;&#x5ea;&#x5d5;.",
+        "tip_ema200": "&#x5de;&#x5de;&#x5d5;&#x5e6;&#x5e2; &#x5e0;&#x5e2; &#x5de;&#x5e2;&#x5e8;&#x5db;&#x5d9; &#x5e9;&#x5dc; 200 &#x5d9;&#x5d5;&#x5dd;. &#x5e7;&#x5d5; &#x5d4;&#x5de;&#x5d2;&#x5de;&#x5d4; &#x5d4;&#x5d0;&#x5e8;&#x5d5;&#x5da;-&#x5d8;&#x5d5;&#x5d5;&#x5d7; &#x5e9;&#x5e2;&#x5dc;&#x5d9;&#x5d5; &#x5e0;&#x5d1;&#x5e0;&#x5d4; &#x5db;&#x5dc; &#x5d4;&#x5e1;&#x5d5;&#x5e8;&#x5e7; &#x5d4;&#x5d6;&#x5d4; &mdash; &#x5d4;&#x5d7;&#x5d6;&#x5e8;&#x5d4; &#x5de;&#x5e2;&#x5dc;&#x5d9;&#x5d5; &#x5d4;&#x5d9;&#x5d0; &#x5d4;&#x5d0;&#x5d9;&#x5ea;&#x5d5;&#x5ea; &#x5d4;&#x5e8;&#x5d0;&#x5e9;&#x5d9;&#x5ea;.",
+        "tip_rsflip_dot": "&#x5d0;&#x5dd; &#x5d4;&#x5e2;&#x5d5;&#x5e6;&#x5de;&#x5d4; &#x5d4;&#x5d9;&#x5d7;&#x5e1;&#x5d9;&#x5ea; &#x5de;&#x5d5;&#x5dc; SPY &#x5d4;&#x5e4;&#x5db;&#x5d4; &#x5de;&#x5e9;&#x5dc;&#x5d9;&#x5dc;&#x5d9;&#x5ea; &#x5dc;&#x5d7;&#x5d9;&#x5d5;&#x5d1;&#x5d9;&#x5ea; (&#x5d0;&#x5d5; &#x5e0;&#x5e2;&#x5d4; &#x5d1;&#x5d7;&#x5d3;&#x5d5;&#x5ea;) &#x5d1;-25 &#x5d4;&#x5d9;&#x5de;&#x5d9;&#x5dd; &#x5d4;&#x5d0;&#x5d7;&#x5e8;&#x5d5;&#x5e0;&#x5d9;&#x5dd;.",
+        "tip_consolidation": "&#x5de;&#x5d0;&#x5e9;&#x5e8; &#x5e9;&#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5e0;&#x5e2; &#x5e4;&#x5d7;&#x5d5;&#x5ea; &#x5de;-20% &#x5d1;-60 &#x5d4;&#x5d9;&#x5de;&#x5d9;&#x5dd; &#x5e9;&#x5dc;&#x5e4;&#x5e0;&#x5d9; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &mdash; &#x5db;&#x5dc;&#x5d5;&#x5de;&#x5e8; &#x5e9;&#x5d4;&#x5d5;&#x5d0; &#x5d1;&#x5e0;&#x5d4; &#x5d1;&#x5e1;&#x5d9;&#x5e1; &#x5d1;&#x5e9;&#x5e7;&#x5d8;, &#x5dc;&#x5d0; &#x5db;&#x5d1;&#x5e8; &#x5d1;&#x5de;&#x5d2;&#x5de;&#x5d4; &#x5d7;&#x5d6;&#x5e7;&#x5d4;.",
+        "tip_momentum": "&#x5e6;&#x5d9;&#x5d5;&#x5df; &#x5de;&#x5e9;&#x5d5;&#x5dc;&#x5d1; 0-100 &#x5d4;&#x5de;&#x5e9;&#x5dc;&#x5d1; &#x5d8;&#x5e8;&#x5d9;&#x5d5;&#x5ea; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8;, &#x5d2;&#x5d5;&#x5d3;&#x5dc; &#x5d4;&#x5d4;&#x5d9;&#x5e4;&#x5d5;&#x5da; &#x5d1;-RS, &#x5e8;&#x5de;&#x5ea; &#x5d4;&#x5de;&#x5d2;&#x5de;&#x5d4; &#x5e9;&#x5dc; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8;, &#x5e2;&#x5d5;&#x5de;&#x5e7; &#x5e2;&#x5e8;&#x5d9;&#x5de;&#x5ea; EMA, &#x5d4;&#x5d3;&#x5d9;&#x5d5;&#x5e7; &#x5e9;&#x5dc; &#x5d4;&#x5d1;&#x5e1;&#x5d9;&#x5e1; &#x5d5;&#x5d4;&#x5d9;&#x5e7;&#x5e3; &#x5d4;&#x5d0;&#x5d7;&#x5d9;&#x5d6;&#x5d5;&#x5ea; &#x5d4;&#x5de;&#x5d6;&#x5d3;&#x5de;&#x5e0;&#x5d5;&#x5ea;. &#x5d2;&#x5d1;&#x5d5;&#x5d4; &#x5d9;&#x5d5;&#x5ea;&#x5e8; = &#x5de;&#x5d2;&#x5de;&#x5d4; &#x5d7;&#x5d6;&#x5e7;&#x5d4; &#x5d5;&#x5d8;&#x5e8;&#x5d9;&#x5d4; &#x5d9;&#x5d5;&#x5ea;&#x5e8;. &#x5e7;&#x5e8;&#x5e0;&#x5d5;&#x5ea; &#x5de;&#x5d3;&#x5d5;&#x5e8;&#x5d2;&#x5d5;&#x5ea; &#x5dc;&#x5e4;&#x5d9; &#x5e6;&#x5d9;&#x5d5;&#x5df; &#x5d6;&#x5d4;.",
+        "lbl_price": "&#x5de;&#x5d7;&#x5d9;&#x5e8;",
+        "lbl_rsvsspy": "RS &#x5de;&#x5d5;&#x5dc; SPY",
+        "lbl_rs25d": "RS &#x5dc;&#x5e4;&#x5e0;&#x5d9; 25 &#x5d9;&#x5d5;&#x5dd;",
+        "lbl_reclaimprice": "&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8;",
+        "lbl_priorrange": "&#x5d8;&#x5d5;&#x5d5;&#x5d7; &#x5e7;&#x5d5;&#x5d3;&#x5dd;",
+        "lbl_vsema200": "&#x5de;&#x5d5;&#x5dc; EMA200",
+        "badge_strict": "&#x5de;&#x5d5;&#x5d2;&#x5d1;&#x5e8; &#x5e6;&#x5d9;&#x5d5;&#x5e8; &#x5d2;&#x5d1;&#x5d5;&#x5d4; &#x2713;",
+        "u_strict": "&#x5de;&#x5d5;&#x5d2;&#x5d1;&#x5e8;",
+        "badge_medium": "&#x5d1;&#x5d9;&#x5e0;&#x5d5;&#x5e0;&#x5d9;",
+        "badge_loose": "&#x5e8;&#x5d5;&#x5d0;&#x5d4;",
+        "badge_rsflip": "&#x5d4;&#x5d9;&#x5e4;&#x5d5;&#x5da; RS &#x2713;",
+        "badge_reclaim": "&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5dc;&#x5e4;&#x5e0;&#x5d9; {days} &#x5d9;&#x5de;&#x5d9;&#x5dd;",
+        "badge_fromentry": "+{pct}% &#x5de;&#x5d4;&#x5db;&#x5e0;&#x5d9;&#x5e1;&#x5d4;",
+        "sig_ema200": "EMA200 &#x2713;",
+        "sig_ema150": "EMA150",
+        "sig_ema100": "EMA100",
+        "sig_rsflip": "&#x5d4;&#x5d9;&#x5e4;&#x5d5;&#x5da; RS",
+        "sig_consolidation": "&#x5e7;&#x5d5;&#x5e0;&#x5e1;&#x5d5;&#x5dc;&#x5d9;&#x5d3;&#x5e6;&#x5d9;&#x5d4; &#x2713;",
+        "drill_hint_n": "&#9664; &nbsp; {n} &#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea; &#x5d1;&#x5de;&#x5d5;&#x5de;&#x5e0;&#x5d8;&#x5d5;&#x5dd; &mdash; &#x5dc;&#x5d7;&#x5d9;&#x5e6;&#x5d4; &#x5dc;&#x5d7;&#x5e7;&#x5d9;&#x5e8;&#x5d4;",
+        "drill_hint_none": "&#9664; &nbsp; &#x5d0;&#x5d9;&#x5df; &#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea; &#x5d1;&#x5de;&#x5d5;&#x5de;&#x5e0;&#x5d8;&#x5d5;&#x5dd; &#x5db;&#x5e8;&#x5d2;&#x5e2;",
+        "mscore_label": "&#x5e6;&#x5d9;&#x5d5;&#x5df;<br>&#x5de;&#x5d5;&#x5de;&#x5e0;&#x5d8;&#x5d5;&#x5dd;",
+        "modal_list_title": "&#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea; &#x5de;&#x5d3;&#x5d5;&#x5e8;&#x5d2;&#x5d5;&#x5ea; &#x5dc;&#x5e4;&#x5d9; &#x5de;&#x5d5;&#x5de;&#x5e0;&#x5d8;&#x5d5;&#x5dd;",
+        "modal_empty_detail": "&rarr; &#x5d1;&#x5d7;&#x5e8;&#x5d5; &#x5d0;&#x5d7;&#x5d6;&#x5e7;&#x5d4; &#x5db;&#x5d3;&#x5d9; &#x5dc;&#x5e8;&#x5d0;&#x5d5;&#x5ea; &#x5e4;&#x5e8;&#x5d8;&#x5d9;&#x5dd; &#x5d5;&#x5d2;&#x5e8;&#x5e3;",
+        "modal_no_holdings": "&#x5d0;&#x5d9;&#x5df; &#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea; &#x5d1;&#x5de;&#x5d5;&#x5de;&#x5e0;&#x5d8;&#x5d5;&#x5dd;.<br>&#x5dc;&#x5db;&#x5dc; &#x5d4;&#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea; &#x5d4;&#x5de;&#x5d5;&#x5d1;&#x5d9;&#x5dc;&#x5d5;&#x5ea; &#x5d9;&#x5e9; &#x5ea;&#x5e9;&#x5d5;&#x5d0;&#x5d4; &#x5e9;&#x5dc;&#x5d9;&#x5dc;&#x5d9;&#x5ea; &#x5e9;&#x5dc; &#x5e9;&#x5d1;&#x5d5;&#x5e2; &#x5d0;&#x5d5; &#x5d7;&#x5d5;&#x5d3;&#x5e9;.",
+        "detail_1w": "&#x5e9;&#x5d1;&#x5d5;&#x5e2;",
+        "detail_momentum_lbl": "&#x5de;&#x5d5;&#x5de;&#x5e0;&#x5d8;&#x5d5;&#x5dd;",
+        "chart_show_etf_prefix": "&#x5d4;&#x5e6;&#x5d2; ",
+        "detail_1m": "&#x5d7;&#x5d5;&#x5d3;&#x5e9;",
+        "detail_3m": "3 &#x5d7;&#x5d5;&#x5d3;&#x5e9;&#x5d9;&#x5dd;",
+        "detail_rsvsspy": "RS &#x5de;&#x5d5;&#x5dc; SPY",
+        "tip_detail_rsvsspy": "&#x5e2;&#x5d5;&#x5e6;&#x5de;&#x5d4; &#x5d9;&#x5d7;&#x5e1;&#x5d9;&#x5ea;: &#x5d4;&#x5ea;&#x5e9;&#x5d5;&#x5d0;&#x5d4; &#x5d4;&#x5d7;&#x5d5;&#x5d3;&#x5e9;&#x5d9;&#x5ea; &#x5e9;&#x5dc; &#x5d4;&#x5de;&#x5e0;&#x5d9;&#x5d4; &#x5d4;&#x5d6;&#x5d4; &#x5e4;&#x5d7;&#x5d5;&#x5ea; &#x5d4;&#x5ea;&#x5e9;&#x5d5;&#x5d0;&#x5d4; &#x5d4;&#x5d7;&#x5d5;&#x5d3;&#x5e9;&#x5d9;&#x5ea; &#x5e9;&#x5dc; SPY. &#x5d7;&#x5d9;&#x5d5;&#x5d1; &#x5de;&#x5e9;&#x5de;&#x5e2;&#x5d5; &#x5e9;&#x5d4;&#x5d5;&#x5d0; &#x5de;&#x5e0;&#x5e6;&#x5d7; &#x5d0;&#x5ea; &#x5d4;&#x5e9;&#x5d5;&#x5e7;.",
+        "tip_detail_ema20": "&#x5de;&#x5de;&#x5d5;&#x5e6;&#x5e2; &#x5e0;&#x5e2; &#x5de;&#x5e2;&#x5e8;&#x5db;&#x5d9; &#x5e9;&#x5dc; 20 &#x5d9;&#x5d5;&#x5dd;. &#x5d4;&#x5d0;&#x5d9;&#x5e0;&#x5d3;&#x5d9;&#x5e7;&#x5d8;&#x5d5;&#x5e8; &#x5d4;&#x5e7;&#x5e6;&#x5e8;-&#x5d8;&#x5d5;&#x5d5;&#x5d7; &#x5d1;&#x5d9;&#x5d5;&#x5ea;&#x5e8; &#x5e9;&#x5d1;&#x5e9;&#x5d9;&#x5de;&#x5d5;&#x5e9; &#x5db;&#x5d0;&#x5df;.",
+        "tip_detail_ema50": "&#x5de;&#x5de;&#x5d5;&#x5e6;&#x5e2; &#x5e0;&#x5e2; &#x5de;&#x5e2;&#x5e8;&#x5db;&#x5d9; &#x5e9;&#x5dc; 50 &#x5d9;&#x5d5;&#x5dd;.",
+        "tip_detail_ema200": "&#x5de;&#x5de;&#x5d5;&#x5e6;&#x5e2; &#x5e0;&#x5e2; &#x5de;&#x5e2;&#x5e8;&#x5db;&#x5d9; &#x5e9;&#x5dc; 200 &#x5d9;&#x5d5;&#x5dd;. &#x5e7;&#x5d5; &#x5d4;&#x5de;&#x5d2;&#x5de;&#x5d4; &#x5d4;&#x5d0;&#x5e8;&#x5d5;&#x5da;-&#x5d8;&#x5d5;&#x5d5;&#x5d7;.",
+        "chart_title": "&#x5d2;&#x5e8;&#x5e3; &#x5de;&#x5d7;&#x5d9;&#x5e8; - 6 &#x5d7;&#x5d5;&#x5d3;&#x5e9;&#x5d9;&#x5dd;",
+        "chart_show_etf": "&#x5d4;&#x5e6;&#x5d2; {etf}",
+        "chart_60d_ago": "&#x5dc;&#x5e4;&#x5e0;&#x5d9; 6 &#x5d7;&#x5d5;&#x5d3;&#x5e9;&#x5d9;&#x5dd;",
+        "chart_today": "&#x5d4;&#x5d9;&#x5d5;&#x5dd;",
+        "w52h": "&#x5de;&#x5d5;&#x5dc; &#x5e9;&#x5d9;&#x5d0; &#x5d9;&#x5d5;&#x5e6;&#x5d0; 52 &#x5e9;&#x5d1;&#x5d5;&#x5e2;&#x5d5;&#x5ea;",
+        "universe_hint": "&#x5db;&#x5dc; &#x5e7;&#x5e8;&#x5e0;&#x5d5;&#x5ea; &#x5d4;-ETF &#x5e0;&#x5e1;&#x5e8;&#x5e7;&#x5d5;&#x5ea; &#x5d1;&#x5db;&#x5dc; &#x5d4;&#x5e8;&#x5e6;&#x5d4;. &#x5db;&#x5d3;&#x5d9; &#x5dc;&#x5d4;&#x5d5;&#x5e1;&#x5d9;&#x5e3; ETF &#x5d7;&#x5d3;&#x5e9;, &#x5d4;&#x5d5;&#x5e1;&#x5d9;&#x5e3;&#x5d5; &#x5d0;&#x5d5;&#x5ea;&#x5d5; &#x5dc;&#x5de;&#x5d9;&#x5dc;&#x5d5;&#x5df; TICKERS &#x5d1;&#x5e1;&#x5e7;&#x5e8;&#x5d9;&#x5e4;&#x5d8; &#x5d5;&#x5d0;&#x5ea; &#x5d4;&#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea; &#x5d4;&#x5de;&#x5d5;&#x5d1;&#x5d9;&#x5dc;&#x5d5;&#x5ea; &#x5dc;&#x5de;&#x5d9;&#x5dc;&#x5d5;&#x5df; HOLDINGS.",
+        "universe_th_ticker": "&#x5e1;&#x5de;&#x5dc;",
+        "universe_th_name": "&#x5e9;&#x5dd;",
+        "universe_th_signal": "&#x5d0;&#x5d5;&#x5ea;",
+        "universe_th_holdings": "&#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea;",
+        "universe_holdings_mapped": "{n} &#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea; &#x5de;&#x5de;&#x5d5;&#x5e4;&#x5d5;&#x5ea;",
+        "methodology_title": "(&#x5ea;&#x5e0;&#x5d0;&#x5d9; &#x5d4;&#x5d0;&#x5d5;&#x5ea;) ETF &#x5ea;&#x5e0;&#x5d0;&#x5d9; &#x5d4;&#x5d0;&#x5d5;&#x5ea; &#x5e9;&#x5dc;",
+        "methodology_1": "<strong>&#x5de;&#x5e2;&#x5dc; EMA200</strong> &mdash; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5d4;&#x5e0;&#x5d5;&#x5db;&#x5d7;&#x5d9; &#x5de;&#x5e2;&#x5dc; EMA200",
+        "methodology_2": "<strong>&#x5d7;&#x5d6;&#x5e8;&#x5d4; &#x5dc;-EMA200</strong> &mdash; &#x5e2;&#x5d1;&#x5e8; &#x5de;&#x5e2;&#x5dc; EMA200 &#x5d1;&#x5ea;&#x5d5;&#x5da; 20 &#x5d9;&#x5de;&#x5d9; &#x5de;&#x5e1;&#x5d7;&#x5e8; &#x5d0;&#x5d7;&#x5e8;&#x5d5;&#x5e0;&#x5d9;&#x5dd; (&#x5d4;&#x5d9;&#x5d4; &#x5de;&#x5ea;&#x5d7;&#x5ea;&#x5d9;&#x5d5; &mdash; 5 &#x5d9;&#x5de;&#x5d9;&#x5dd; &#x5d5;&#x5de;&#x5e2;&#x5dc;&#x5d4;)",
+        "methodology_3": "<strong>&#x5e9;&#x5d9;&#x5e4;&#x5d5;&#x5e2; EMA200</strong> &mdash; EMA200 &#x5e9;&#x5d8;&#x5d5;&#x5d7; &#x5d0;&#x5d5; &#x5e2;&#x5d5;&#x5dc;&#x5d4; (&#x5dc;&#x5d0; &#x5d1;&#x5de;&#x5d2;&#x5de;&#x5ea; &#x5d9;&#x5e8;&#x5d9;&#x5d3;&#x5d4;)",
+        "methodology_4": "<strong>&#x5dc;&#x5d0; &#x5de;&#x5d5;&#x5e8;&#x5d7;&#x5d1;</strong> &mdash; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5d1;&#x5d8;&#x5d5;&#x5d5;&#x5d7; 20% &#x5de;&#x5e0;&#x5e7;&#x5d5;&#x5d3;&#x5ea; &#x5d4;&#x5d7;&#x5d6;&#x5e8;&#x5d4;",
+        "methodology_5": "<strong>&#x5e9;&#x5d9;&#x5e4;&#x5d5;&#x5e8; RS</strong> &mdash; RS &#x5de;&#x5d5;&#x5dc; SPY &#x5d4;&#x5d9;&#x5d4; &#x5e9;&#x5dc;&#x5d9;&#x5dc;&#x5d9; &#x5dc;&#x5e4;&#x5e0;&#x5d9; 25 &#x5d9;&#x5d5;&#x5dd;, &#x5d7;&#x5d9;&#x5d5;&#x5d1;&#x5d9; &#x5db;&#x5e8;&#x5d2;&#x5e2; (&#x5d0;&#x5d5; &#x5e0;&#x5e2; &#x5d1;-4+ &#x5e0;&#x5e7;&#x5d5;&#x5d3;&#x5d5;&#x5ea;)",
+        "methodology_6": "<strong>&#x5e7;&#x5d5;&#x5e0;&#x5e1;&#x5d5;&#x5dc;&#x5d9;&#x5d3;&#x5e6;&#x5d9;&#x5d4; &#x5e7;&#x5d5;&#x5d3;&#x5de;&#x5ea;</strong> &mdash; &#x5d4;&#x5de;&#x5d7;&#x5d9;&#x5e8; &#x5e0;&#x5e2; &#x5d1;&#x5e4;&#x5d7;&#x5d5;&#x5ea; &#x5de;-20% &#x5d1;-60 &#x5d4;&#x5d9;&#x5de;&#x5d9;&#x5dd; &#x5e9;&#x5dc;&#x5e4;&#x5e0;&#x5d9; &#x5d4;&#x5d7;&#x5d6;&#x5e8;&#x5d4;",
+        "methodology_score_title": "(0-10) &#x5e6;&#x5d9;&#x5d5;&#x5df; &#x5de;&#x5d5;&#x5de;&#x5e0;&#x5d8;&#x5d5;&#x5dd; &#x5dc;&#x5d0;&#x5d7;&#x5d6;&#x5d5;&#x5e7;&#x5d5;&#x5ea;",
+        "methodology_score_body": "1&#x5e9; &gt;0% +1 &middot; 1&#x5e9; &gt;3% +1 &middot; 1&#x5d7; &gt;5% +1 &middot; 1&#x5d7; &gt;15% +1 &middot; 3&#x5d7; &gt;15% +1 &middot; 3&#x5d7; &gt;30% +1 &middot; &#x5de;&#x5e2;&#x5dc; EMA20 +1 &middot; &#x5de;&#x5e2;&#x5dc; EMA50 +1 &middot; &#x5de;&#x5e2;&#x5dc; EMA200 +1 &middot; &#x5d1;&#x5d8;&#x5d5;&#x5d5;&#x5d7; 10% &#x5de;&#x5e9;&#x5d9;&#x5d0; &#x5d9;&#x5d5;&#x5e6;&#x5d0; 52 &#x5e9;&#x5d1;&#x5d5;&#x5e2;&#x5d5;&#x5ea; +1",
+        "footer": "&#x5e0;&#x5ea;&#x5d5;&#x5e0;&#x5d9;&#x5dd;: Yahoo Finance &middot; &#x5d0;&#x5d9;&#x5df; &#x5d6;&#x5d5; &#x5d9;&#x5e2;&#x5d5;&#x5e6;&#x5d4; &#x5e4;&#x5d9;&#x5e0;&#x5e0;&#x5e1;&#x5d9;&#x5ea; &middot; &#x5d1;&#x5d3;&#x5e7;&#x5d5; &#x5d0;&#x5ea; &#x5d4;&#x5de;&#x5d9;&#x5d3;&#x5e2; &#x5d1;&#x5e2;&#x5e6;&#x5de;&#x5db;&#x5dd;",
+        "empty_no_signals": "&#x5d0;&#x5d9;&#x5df; &#x5d0;&#x5d9;&#x5ea;&#x5d5;&#x5ea; &#x5d4;&#x5e9;&#x5d1;&#x5d5;&#x5e2;.<br>&#x5d4;&#x5e9;&#x5d5;&#x5e7; &#x5de;&#x5d5;&#x5e8;&#x5d7;&#x5d1; &#x5d0;&#x5d5; &#x5d1;&#x5e7;&#x5d5;&#x5e0;&#x5e1;&#x5d5;&#x5dc;&#x5d9;&#x5d3;&#x5e6;&#x5d9;&#x5d4; &mdash; &#x5d4;&#x5de;&#x5e9;&#x5d9;&#x5db;&#x5d5; &#x5dc;&#x5d4;&#x5d9;&#x5d5;&#x5ea; &#x5e1;&#x5d1;&#x5dc;&#x5e0;&#x5d9;&#x5d9;&#x5dd;.",
+        "lang_toggle": "English",
+        "lang_toggle_href": "en/",
+    },
+}
+ 
+def t(lang, key, **kwargs):
+    """Translation lookup with optional .format() substitution."""
+    s = T[lang][key]
+    if kwargs:
+        s = s.format(**kwargs)
+    return s
+ 
 # ── Universe ─────────────────────────────────────────────────────────────────
 TICKERS = {
     "US Sectors": {
@@ -121,7 +324,7 @@ TICKERS = {
         "UUP":  "Invesco DB US Dollar Index Bullish",
     },
 }
-
+ 
 # ── Holdings map (top ~12 per ETF, US-tradeable tickers where available) ─────
 # Korean/Taiwanese stocks listed as ADRs or US-listed where possible;
 # otherwise native tickers (yfinance supports many KRX/TSE tickers)
@@ -219,9 +422,9 @@ HOLDINGS = {
     "EMB":  [("VWOB","Vanguard EM Gov Bond"),("PCY","Invesco EM Sovereign Debt"),("LEMB","iShares EM Local Currency Bond"),("EBND","SPDR Bloomberg EM Local Bond"),("HYEM","VanEck EM High Yield Bond"),("EMHY","iShares EM High Yield Bond"),("EMCD","VanEck EM Investment Grade + BB"),("EMAG","VanEck EM Aggregate Bond"),("EMXC","iShares MSCI EM ex-China"),("EEM","iShares MSCI Emerging Markets")],
     "UUP":  [("FXE","Invesco Euro Currency"),("FXY","Invesco Japanese Yen"),("FXB","Invesco British Pound"),("FXF","Invesco Swiss Franc"),("FXC","Invesco Canadian Dollar"),("FXA","Invesco Australian Dollar"),("CYB","WisdomTree Chinese Yuan"),("CEW","WisdomTree EM Currency"),("DBV","Invesco G10 Currency Carry"),("USDU","WisdomTree Bloomberg Dollar")],
 }
-
+ 
 BENCHMARK = "SPY"
-
+ 
 # ── Data fetch ────────────────────────────────────────────────────────────────
 def fetch_close(ticker, period_days=500):
     try:
@@ -236,7 +439,7 @@ def fetch_close(ticker, period_days=500):
     except Exception as e:
         print(f"  [fetch error] {ticker}: {e}")
         return None
-
+ 
 # ── ETF signal analysis (unchanged from v2.3) ────────────────────────────────
 def analyse(close, spy_close):
     if len(close) < 220:
@@ -320,7 +523,7 @@ def analyse(close, spy_close):
         "pct_above_ema200":        round((price_now / ema200_now - 1) * 100, 2),
         "ema_mode":                ema_mode,
     }
-
+ 
 # ── ETF momentum score (0-100) ───────────────────────────────────────────────
 def score_etf_momentum(sig, n_qualified_holdings, n_total_holdings):
     """
@@ -328,31 +531,31 @@ def score_etf_momentum(sig, n_qualified_holdings, n_total_holdings):
     Inputs are all already computed during the ETF scan / holdings drill-down.
     """
     score = 0.0
-
+ 
     # 1. Reclaim freshness (0-25 pts) — fresher reclaim = stronger signal
     days = sig["days_since_reclaim"]
     freshness = max(0, 25 - days * 1.25)  # 0d=25, 10d=12.5, 20d=0
     score += freshness
-
+ 
     # 2. RS swing magnitude (0-25 pts) — bigger flip = stronger conviction
     rs_swing = sig["rs_now"] - sig["rs_prev"]
     rs_pts = min(25, max(0, rs_swing * 1.2))  # ~21pp swing maxes this out
     score += rs_pts
-
+ 
     # 3. Extension penalty (0-20 pts) — closer to reclaim point = more room left
     ext = abs(sig["extension_pct"])
     ext_pts = max(0, 20 - ext * 1.0)  # 0%=20, 20%=0
     score += ext_pts
-
+ 
     # 4. EMA stack depth (0-15 pts)
     stack_pts = {"strict": 15, "medium150": 8, "loose": 0}[sig["ema_mode"]]
     score += stack_pts
-
+ 
     # 5. Consolidation tightness (0-10 pts) — tighter base = cleaner setup
     consol = sig["consolidation_range_pct"]
     consol_pts = max(0, 10 - consol * 0.5)  # 0%=10, 20%=0
     score += consol_pts
-
+ 
     # 6. Holdings breadth (0-5 pts) — is the move broad-based or narrow?
     if n_total_holdings > 0:
         breadth_ratio = n_qualified_holdings / n_total_holdings
@@ -360,42 +563,42 @@ def score_etf_momentum(sig, n_qualified_holdings, n_total_holdings):
     else:
         breadth_pts = 0
     score += breadth_pts
-
+ 
     return round(min(100, max(0, score)), 1)
-
-
-
+ 
+ 
+ 
 def score_holding(close, spy_close):
     """Score a holding for momentum. Returns dict or None if insufficient data."""
     if close is None or len(close) < 60:
         return None
     try:
         price = float(close.iloc[-1])
-
+ 
         # Performance
         def perf(n):
             if len(close) > n:
                 return round((close.iloc[-1] / close.iloc[-n] - 1) * 100, 1)
             return None
-
+ 
         p1w  = perf(5)
         p1m  = perf(21)
         p3m  = perf(63)
-
+ 
         # 52W high
         w52_high = float(close.tail(252).max())
         pct_from_52w = round((price / w52_high - 1) * 100, 1)
         near_52w = pct_from_52w >= -10
-
+ 
         # EMA stack
         ema20  = float(close.ewm(span=20,  adjust=False).mean().iloc[-1])
         ema50  = float(close.ewm(span=50,  adjust=False).mean().iloc[-1])
         ema200_val = float(close.ewm(span=200, adjust=False).mean().iloc[-1]) if len(close) >= 200 else None
-
+ 
         above_ema20  = price > ema20
         above_ema50  = price > ema50
         above_ema200 = (price > ema200_val) if ema200_val else None
-
+ 
         # Momentum score (0-10)
         score = 0
         if p1w  and p1w  > 0:  score += 1
@@ -408,7 +611,7 @@ def score_holding(close, spy_close):
         if above_ema50:        score += 1
         if above_ema200:       score += 1
         if near_52w:           score += 1
-
+ 
         # RS vs SPY (1M)
         rs_1m = None
         if spy_close is not None and len(spy_close) > 21 and len(close) > 21:
@@ -417,23 +620,25 @@ def score_holding(close, spy_close):
                 c   = close.reindex(common)
                 spy = spy_close.reindex(common)
                 rs_1m = round(((c.iloc[-1]/c.iloc[-21]-1) - (spy.iloc[-1]/spy.iloc[-21]-1)) * 100, 1)
-
-        # Sparkline data (last 60 days, normalised to 100 using price's day-0 base)
-        spark_raw = close.tail(60).tolist()
+ 
+        # Sparkline data — last 6 months (~126 trading days)
+        CHART_DAYS = 126
+        spark_raw = close.tail(CHART_DAYS).tolist()
         base = spark_raw[0] if spark_raw[0] != 0 else 1
         spark = [round(v / base * 100, 2) for v in spark_raw]
-
-        # EMA overlay series (same 60-day window, same normalisation base as price)
-        # Computed on full history so early-window EMA values are accurate, then sliced.
-        ema20_series  = close.ewm(span=20,  adjust=False).mean().tail(60).tolist()
-        ema50_series  = close.ewm(span=50,  adjust=False).mean().tail(60).tolist()
+        # Store raw prices (rounded to 2dp) for Y-axis labels in the chart
+        spark_prices = [round(v, 2) for v in spark_raw]
+ 
+        # EMA overlay series (same window, same normalisation base as price)
+        ema20_series  = close.ewm(span=20,  adjust=False).mean().tail(CHART_DAYS).tolist()
+        ema50_series  = close.ewm(span=50,  adjust=False).mean().tail(CHART_DAYS).tolist()
         spark_ema20 = [round(v / base * 100, 2) for v in ema20_series]
         spark_ema50 = [round(v / base * 100, 2) for v in ema50_series]
         spark_ema200 = None
         if len(close) >= 200:
-            ema200_series = close.ewm(span=200, adjust=False).mean().tail(60).tolist()
+            ema200_series = close.ewm(span=200, adjust=False).mean().tail(CHART_DAYS).tolist()
             spark_ema200 = [round(v / base * 100, 2) for v in ema200_series]
-
+ 
         return {
             "price":         round(price, 2),
             "p1w":           p1w,
@@ -450,13 +655,14 @@ def score_holding(close, spy_close):
             "rs_1m":         rs_1m,
             "score":         score,
             "spark":         spark,
+            "spark_prices":  spark_prices,
             "spark_ema20":   spark_ema20,
             "spark_ema50":   spark_ema50,
             "spark_ema200":  spark_ema200,
         }
     except Exception as e:
         return None
-
+ 
 def analyse_holdings(etf_ticker, spy_close):
     """Fetch and score all holdings for a flagged ETF."""
     holdings = HOLDINGS.get(etf_ticker, [])
@@ -484,7 +690,7 @@ def analyse_holdings(etf_ticker, spy_close):
     ]
     qualified.sort(key=lambda x: (-x["score"], -(x["p1m"] or -999)))
     return qualified
-
+ 
 # ── HTML ──────────────────────────────────────────────────────────────────────
 CSS = """:root{
   --bg:#111827;--surface:#1a2336;--surface2:#1f2b40;--surface3:#263047;--border:#2d3f5c;
@@ -518,7 +724,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .section-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.15em;color:#8fa8c8;
   margin:2rem 0 .8rem;padding-left:.7rem;border-left:2px solid var(--accent)}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;margin-bottom:.5rem}
-
+ 
 /* ETF card */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
   transition:border-color .15s;position:relative}
@@ -534,7 +740,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .card[data-mode="loose"]::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,var(--loose),transparent)}
 .card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem;gap:.7rem}
-
+ 
 /* ETF momentum score block */
 .mscore-block{flex-shrink:0;border-radius:10px;padding:.5rem .65rem;text-align:center;
   min-width:58px;border:1px solid var(--border)}
@@ -576,20 +782,20 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .dot-flip{background:var(--flip);box-shadow:0 0 7px var(--flip)}
 .dot-off{background:var(--border)}
 .sig-lbl{font-family:'Noto Sans',sans-serif;font-size:.6rem;color:#8fa8c8}
-
+ 
 /* ETF card drill hint */
 .drill-hint{font-family:'Noto Sans',sans-serif;font-size:.58rem;color:var(--accent);
   display:flex;align-items:center;gap:.4rem;margin-top:.6rem;opacity:.8;transition:opacity .15s}
 .card-top:hover .drill-hint{opacity:1}
-
+ 
 /* ── Modal overlay ── */
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(5,10,20,.82);
   backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:1.5rem}
 .modal-backdrop.open{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;
-  width:min(1075px,100%);max-height:94vh;display:flex;flex-direction:column;
+  width:min(1240px,100%);max-height:96vh;display:flex;flex-direction:column;
   box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;position:relative}
-
+ 
 /* Modal header */
 .modal-header{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:1rem;flex-shrink:0}
@@ -599,15 +805,15 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
   border:1px solid var(--border);color:#8fa8c8;cursor:pointer;font-size:1rem;
   display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .modal-close:hover{background:var(--red);border-color:var(--red);color:#fff}
-
+ 
 /* Modal body — two-column: list left, detail right */
 .modal-body{display:grid;grid-template-columns:375px 1fr;flex:1;overflow:hidden;min-height:0}
-
+ 
 /* Left: holdings list */
 .modal-list{border-right:1px solid var(--border);overflow-y:auto;padding:.9rem}
 .modal-list-title{font-size:.55rem;text-transform:uppercase;letter-spacing:.14em;color:#8fa8c8;
   padding:.2rem .5rem .7rem;border-bottom:1px solid var(--border);margin-bottom:.6rem}
-
+ 
 /* Holding row */
 .h-row{display:flex;align-items:center;gap:.6rem;padding:.55rem .6rem;border-radius:9px;
   cursor:pointer;transition:background .12s,border-color .12s;
@@ -622,7 +828,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .h-row-right{text-align:right;flex-shrink:0}
 .h-row-score{font-family:'Noto Sans',sans-serif;font-size:.65rem;color:var(--bull);font-weight:600}
 .h-row-perf{font-family:'Noto Sans',sans-serif;font-size:.58rem}
-
+ 
 /* Right: holding detail pane */
 .modal-detail{overflow-y:auto;padding:1.2rem 1.4rem;display:flex;flex-direction:column;gap:1rem}
 .detail-empty{display:flex;align-items:center;justify-content:center;height:100%;
@@ -631,7 +837,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .detail-ticker{font-family:'Sora',sans-serif;font-size:2rem;font-weight:700;color:#fff;letter-spacing:-.02em;line-height:1}
 .detail-name{font-family:'Noto Sans',sans-serif;font-size:.65rem;color:#8fa8c8}
 .detail-price{font-family:'Noto Sans',sans-serif;font-size:1rem;font-weight:600;color:var(--accent);margin-left:auto}
-
+ 
 /* Score bar */
 .detail-score{display:flex;align-items:center;gap:.6rem}
 .detail-score-label{font-family:'Noto Sans',sans-serif;font-size:.6rem;color:#8fa8c8;text-transform:uppercase;letter-spacing:.1em}
@@ -639,16 +845,16 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .bd{width:9px;height:9px;border-radius:50%;background:var(--border)}
 .bd.on{background:var(--bull);box-shadow:0 0 5px var(--bull)}
 .detail-score-num{font-family:'Noto Sans',sans-serif;font-size:.85rem;font-weight:700;color:var(--bull)}
-
+ 
 /* Perf grid */
 .detail-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
 .dm{background:var(--surface2);border-radius:8px;padding:.55rem .7rem}
 .dm-v{font-family:'Noto Sans',sans-serif;font-size:.9rem;font-weight:600}
 .dm-l{font-size:.55rem;text-transform:uppercase;letter-spacing:.08em;color:#8fa8c8;margin-top:.15rem}
-
+ 
 /* EMA pills */
 .detail-emas{display:flex;gap:.4rem;flex-wrap:wrap}
-
+ 
 /* Sparkline */
 .detail-spark{background:var(--surface2);border-radius:10px;padding:1rem}
 .spark-title{font-family:'Noto Sans',sans-serif;font-size:.58rem;color:#8fa8c8;
@@ -658,16 +864,22 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .etf-overlay-toggle{display:flex;align-items:center;gap:.4rem;font-family:'Noto Sans',sans-serif;
   font-size:.6rem;color:#8fa8c8;cursor:pointer;user-select:none}
 .etf-overlay-toggle input{accent-color:var(--accent);cursor:pointer;width:13px;height:13px}
-.spark-svg-big{width:100%;height:150px;display:block}
+.spark-svg-big{width:100%;height:220px;display:block}
+.spark-wrap{position:relative}
+.chart-tooltip{position:absolute;pointer-events:none;background:#0c1422;
+  border:1px solid var(--border);border-radius:6px;padding:.35rem .6rem;
+  font-family:'Noto Sans',sans-serif;font-size:.65rem;color:var(--text);
+  white-space:nowrap;opacity:0;transition:opacity .1s;z-index:10;
+  box-shadow:0 4px 12px rgba(0,0,0,.5)}
 .spark-dates{font-family:'Noto Sans',sans-serif;font-size:.55rem;color:#8fa8c8;
   display:flex;justify-content:space-between;margin-top:.3rem}
-
+ 
 .h-pill{font-family:'Noto Sans',sans-serif;font-size:.6rem;border-radius:12px;padding:.2rem .6rem}
 .h-52w-yes{background:rgba(0,224,154,.07);color:var(--bull);border:1px solid rgba(0,224,154,.18)}
 .h-52w-no{background:rgba(255,77,109,.07);color:var(--red);border:1px solid rgba(255,77,109,.18)}
 .ep-on{background:rgba(0,224,154,.07);color:var(--bull);border:1px solid rgba(0,224,154,.18)}
 .ep-off{background:rgba(255,77,109,.07);color:var(--red);border:1px solid rgba(255,77,109,.18)}
-
+ 
 .tab-bar{display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:0}
 .tab-btn{font-family:'Noto Sans',sans-serif;font-size:.7rem;font-weight:600;
   letter-spacing:.08em;text-transform:uppercase;padding:.55rem 1.2rem;cursor:pointer;
@@ -677,7 +889,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tab-pane{display:none}
 .tab-pane.active{display:block}
-
+ 
 /* ETF Universe table */
 .universe-group{margin-bottom:2rem}
 .universe-group-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.15em;color:#8fa8c8;
@@ -726,7 +938,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 @media (max-width: 768px){
   .tip-bubble{width:200px;font-size:.62rem}
 }
-
+ 
 /* ============================================================
    RESPONSIVE LAYER — mobile / narrow screens only.
    Everything above this point is untouched; these rules only
@@ -734,68 +946,114 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
    ============================================================ */
 @media (max-width: 768px){
   body{padding:1rem}
-
+ 
   .header{flex-direction:column;align-items:flex-start;gap:.5rem}
   .header h1{font-size:1.5rem}
   .run-meta{text-align:left}
-
+ 
   .stats{gap:.5rem}
   .stat{min-width:0;flex:1 1 calc(50% - .5rem);padding:.75rem 1rem}
   .stat-n{font-size:1.9rem}
   .stat-l{font-size:.6rem}
-
+ 
   .mode-bar{padding:.7rem .8rem;gap:.5rem}
   .mode-btn{font-size:.62rem;padding:.3rem .6rem;flex:1 1 auto;text-align:center}
   .mode-desc{margin-left:0;width:100%;order:99}
-
+ 
   .tab-bar{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
   .tab-btn{white-space:nowrap;font-size:.62rem;padding:.5rem .8rem}
-
+ 
   .cards{grid-template-columns:1fr;gap:.8rem}
-
+ 
   .card-top{padding:1rem 1.1rem}
   .card-head{flex-wrap:wrap}
   .badges{align-items:flex-start;width:100%}
   .metrics{grid-template-columns:repeat(2,1fr)}
-
+ 
   /* Modal: full-screen sheet instead of centered card */
   .modal-backdrop{padding:0}
   .modal{width:100%;height:100%;max-height:100vh;border-radius:0}
   .modal-header{padding:.9rem 1rem}
   .modal-etf-ticker{font-size:1.4rem}
   .modal-close{width:38px;height:38px}
-
+ 
   /* Stack list + detail vertically instead of side-by-side */
   .modal-body{grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow-y:auto}
   .modal-list{border-right:none;border-bottom:1px solid var(--border);
     max-height:38vh;overflow-y:auto}
   .modal-detail{padding:1rem}
-
+ 
   .h-row{padding:.7rem .6rem}
   .h-row-name{max-width:110px}
-
+ 
   .detail-header{gap:.5rem}
   .detail-ticker{font-size:1.6rem}
   .detail-price{font-size:.9rem}
   .detail-metrics{grid-template-columns:repeat(2,1fr)}
-
+ 
   .spark-title-row{flex-wrap:wrap;gap:.4rem}
-  .spark-svg-big{height:130px}
-
+  .spark-svg-big{height:180px}
+ 
   .universe-table th, .universe-table td{padding:.4rem .5rem;font-size:.6rem}
   .u-name{display:none}
-
+ 
   .methodology{font-size:.6rem;padding:1rem}
 }
-
+ 
 @media (max-width: 420px){
   .stat{flex:1 1 100%}
   .metrics{grid-template-columns:1fr 1fr}
   .detail-metrics{grid-template-columns:1fr 1fr}
 }
+ 
+/* ============================================================
+   Language toggle button — top-right corner on both pages.
+   ============================================================ */
+.lang-toggle{position:fixed;top:1rem;inset-inline-end:1rem;z-index:300;
+  font-family:'Noto Sans',sans-serif;font-size:.7rem;font-weight:600;
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:.45rem .9rem;color:var(--accent);text-decoration:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);transition:all .15s}
+.lang-toggle:hover{background:var(--surface2);border-color:var(--accent)}
+ 
+/* ============================================================
+   RTL layer — only active when <html dir="rtl">. Logical
+   properties (inset-inline-*) above already self-mirror; the
+   rules below fix the handful of properties that don't.
+   ============================================================ */
+html[dir="rtl"] .run-meta{text-align:left}
+html[dir="rtl"] .badges{align-items:flex-start}
+html[dir="rtl"] .mscore-block{order:2}
+html[dir="rtl"] .ticker-block{order:1}
+html[dir="rtl"] .card-head{flex-direction:row-reverse}
+ 
+/* Modal: mirror list/detail panes so list sits on the right,
+   detail pane on the left, matching natural RTL reading order */
+html[dir="rtl"] .modal-list{border-right:none;border-left:1px solid var(--border)}
+html[dir="rtl"] .h-row{flex-direction:row-reverse}
+html[dir="rtl"] .h-row-right{text-align:left}
+html[dir="rtl"] .modal-close{margin-inline-start:0;margin-inline-end:auto}
+ 
+/* Drill-down arrow should point left (toward reading start) in RTL */
+html[dir="rtl"] .drill-hint{direction:rtl}
+ 
+/* Keep all numeric/ticker content LTR even inside RTL flow —
+   handled primarily via dir="ltr" on individual elements in the
+   HTML, this is a fallback for any that slip through */
+html[dir="rtl"] .m-v, html[dir="rtl"] .stat-n, html[dir="rtl"] .ticker,
+html[dir="rtl"] .ema-pill, html[dir="rtl"] .u-ticker,
+html[dir="rtl"] .modal-etf-ticker, html[dir="rtl"] .mscore-num,
+html[dir="rtl"] .mscore-rank{direction:ltr;unicode-bidi:embed}
+ 
+@media (max-width: 768px){
+  .lang-toggle{top:.6rem;inset-inline-end:.6rem;font-size:.62rem;padding:.35rem .7rem}
+}
 """
-
+ 
 JS = """
+// -- Translated UI strings (filled in per-language at generation time) --
+const UI = __UI_STRINGS_JSON__;
+ 
 // -- Tab switching --
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -803,12 +1061,12 @@ function switchTab(tab){
   document.getElementById('tab-btn-'+tab).classList.add('active');
   document.getElementById('tab-pane-'+tab).classList.add('active');
 }
-
+ 
 // -- EMA filter mode --
 const MODES = {
-  strict:{desc:'Showing highest-conviction signals (above EMA100 + EMA150 + EMA200)',btnClass:'active-strict',show:['strict']},
-  medium:{desc:'Showing signals above EMA200 + EMA150 (may be below EMA100)',btnClass:'active-medium',show:['strict','medium150']},
-  loose: {desc:'Showing all EMA200 reclaims -- includes assets still below EMA100/150',btnClass:'active-loose',show:['strict','medium150','loose']}
+  strict:{desc:UI.mode_desc_strict,btnClass:'active-strict',show:['strict']},
+  medium:{desc:UI.mode_desc_medium,btnClass:'active-medium',show:['strict','medium150']},
+  loose: {desc:UI.mode_desc_loose,btnClass:'active-loose',show:['strict','medium150','loose']}
 };
 function setMode(mode){
   const cfg=MODES[mode];
@@ -824,23 +1082,23 @@ function setMode(mode){
     g.classList.toggle('all-hidden',!has);
   });
 }
-
+ 
 // ── Spark data (embedded at generation time) ─────────────────────────────────
 const SPARK_DATA = __SPARK_JSON__;
-
+ 
 // -- ETF's own price series (for overlay-on-stock-chart) --
 const ETF_SPARK_DATA = __ETF_SPARK_JSON__;
-
+ 
 // Overlay toggle state -- defaults to ON
 let showEtfOverlay = true;
-
+ 
 // ── Holdings data (embedded at generation time) ──────────────────────────────
 const HOLDINGS_DATA = __HOLDINGS_JSON__;
-
+ 
 // ── Modal state ──────────────────────────────────────────────────────────────
 let activeEtf = null;
 let activeTicker = null;
-
+ 
 function openModal(etfTicker, etfName, e){
   if(e) e.stopPropagation();
   try {
@@ -874,10 +1132,10 @@ function openModal(etfTicker, etfName, e){
   });
   // Reset detail pane
   document.getElementById('modal-detail').innerHTML =
-    '<div class="detail-empty">← Select a holding to see details &amp; chart</div>';
+    `<div class="detail-empty">${UI.modal_empty_detail}</div>`;
   // If no holdings passed the filter, show message in list panel
   if(holdings.length === 0){
-    listEl.innerHTML = '<div style="font-family:monospace;font-size:.65rem;color:#8fa8c8;padding:1rem;line-height:2;text-align:center">No holdings in momentum.<br>All top holdings have negative 1W or 1M performance.</div>';
+    listEl.innerHTML = `<div style="font-family:monospace;font-size:.65rem;color:#8fa8c8;padding:1rem;line-height:2;text-align:center">${UI.modal_no_holdings}</div>`;
   }
   backdrop.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -891,14 +1149,14 @@ function openModal(etfTicker, etfName, e){
     console.error('openModal error:', err);
   }
 }
-
+ 
 function closeModal(e){
   if(e) e.stopPropagation();
   document.getElementById('modal-backdrop').classList.remove('open');
   document.body.style.overflow = '';
   activeEtf = null; activeTicker = null;
 }
-
+ 
 // Close on backdrop click (not modal itself)
 document.addEventListener('DOMContentLoaded', () => {
   setMode('strict');
@@ -908,7 +1166,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ESC key
   document.addEventListener('keydown', (e) => { if(e.key==='Escape') closeModal(); });
 });
-
+ 
 function selectHolding(h, rowEl){
   activeTicker = h.ticker;
   // Highlight row
@@ -917,7 +1175,7 @@ function selectHolding(h, rowEl){
   // Render detail pane
   renderDetail(h);
 }
-
+ 
 function renderDetail(h){
   try {
   const el = document.getElementById('modal-detail');
@@ -932,7 +1190,7 @@ function renderDetail(h){
   const w52t = `${(h.pct_from_52w != null && h.pct_from_52w > 0) ? '+' : ''}${h.pct_from_52w != null ? h.pct_from_52w.toFixed(1) : 'n/a'}% vs 52W high`;
   const bigDots = Array.from({length:10},(_,i)=>
     `<span class="bd ${i<h.score?'on':''}"></span>`).join('');
-
+ 
   el.innerHTML = `
     <div class="detail-header">
       <div class="detail-ticker">${h.ticker}</div>
@@ -940,137 +1198,214 @@ function renderDetail(h){
       <div class="detail-price">$${h.price != null ? h.price.toFixed(2) : 'n/a'}</div>
     </div>
     <div class="detail-score">
-      <span class="detail-score-label">Momentum</span>
+      <span class="detail-score-label">${UI.detail_momentum_lbl}</span>
       <div class="big-dots">${bigDots}</div>
       <span class="detail-score-num">${h.score}/10</span>
     </div>
     <div class="detail-metrics">
-      <div class="dm"><div class="dm-v">${p1w}</div><div class="dm-l">1 Week</div></div>
-      <div class="dm"><div class="dm-v">${p1m}</div><div class="dm-l">1 Month</div></div>
-      <div class="dm"><div class="dm-v">${p3m}</div><div class="dm-l">3 Month</div></div>
-      <div class="dm"><div class="dm-v">${rs}</div><div class="dm-l"><span class="tip" tabindex="0">RS vs SPY<span class="tip-bubble">Relative Strength: this stock's 1-month return minus SPY's 1-month return. Positive means it's beating the broad market, not just rising with it.</span></span></div></div>
+      <div class="dm"><div class="dm-v">${p1w}</div><div class="dm-l">${UI.detail_1w}</div></div>
+      <div class="dm"><div class="dm-v">${p1m}</div><div class="dm-l">${UI.detail_1m}</div></div>
+      <div class="dm"><div class="dm-v">${p3m}</div><div class="dm-l">${UI.detail_3m}</div></div>
+      <div class="dm"><div class="dm-v">${rs}</div><div class="dm-l"><span class="tip" tabindex="0">${UI.detail_rsvsspy}<span class="tip-bubble">${UI.tip_detail_rsvsspy}</span></span></div></div>
     </div>
     <div class="detail-emas">
-      <span class="h-pill ${e20}"><span class="tip" tabindex="0">EMA20 ${h.above_ema20?'ON':'OFF'}<span class="tip-bubble">20-day Exponential Moving Average. The shortest-term trend reference used here &mdash; price above it suggests near-term momentum.</span></span></span>
-      <span class="h-pill ${e50}"><span class="tip" tabindex="0">EMA50 ${h.above_ema50?'ON':'OFF'}<span class="tip-bubble">50-day Exponential Moving Average. A medium-term trend reference, between EMA20 and EMA200.</span></span></span>
-      <span class="h-pill ${e200}"><span class="tip" tabindex="0">EMA200 ${h.above_ema200?'ON':'OFF'}<span class="tip-bubble">200-day Exponential Moving Average. The long-term trend line &mdash; the entire scanner is built around stocks/ETFs reclaiming this level.</span></span></span>
+      <span class="h-pill ${e20}"><span class="tip" tabindex="0">EMA20 ${h.above_ema20?'ON':'OFF'}<span class="tip-bubble">${UI.tip_detail_ema20}</span></span></span>
+      <span class="h-pill ${e50}"><span class="tip" tabindex="0">EMA50 ${h.above_ema50?'ON':'OFF'}<span class="tip-bubble">${UI.tip_detail_ema50}</span></span></span>
+      <span class="h-pill ${e200}"><span class="tip" tabindex="0">EMA200 ${h.above_ema200?'ON':'OFF'}<span class="tip-bubble">${UI.tip_detail_ema200}</span></span></span>
       <span class="h-pill ${w52c}">${w52t}</span>
     </div>
     <div class="detail-spark">
       <div class="spark-title-row">
-        <span class="spark-title">60-Day Price Chart</span>
+        <span class="spark-title">${UI.chart_title}</span>
         <label class="etf-overlay-toggle">
           <input type="checkbox" id="etf-overlay-checkbox" ${showEtfOverlay ? 'checked' : ''}
             onchange="toggleEtfOverlay(this.checked)">
-          <span>Show ${activeEtf || 'ETF'}</span>
+          <span>${UI.chart_show_etf_prefix}${activeEtf || 'ETF'}</span>
         </label>
         <span id="spark-legend" class="spark-legend"></span>
       </div>
-      <svg class="spark-svg-big" id="spark-big" viewBox="0 0 625 150" preserveAspectRatio="none"></svg>
-      <div class="spark-dates"><span>60 days ago</span><span>Today</span></div>
+      <div class="spark-wrap">
+        <svg class="spark-svg-big" id="spark-big" viewBox="0 0 700 220" preserveAspectRatio="none"></svg>
+        <div class="chart-tooltip" id="chart-tooltip"></div>
+      </div>
+      <div class="spark-dates"><span>${UI.chart_60d_ago}</span><span>${UI.chart_today}</span></div>
     </div>`;
-
+ 
   // Draw sparkline
   const svgEl = document.getElementById('spark-big');
-  drawSpark(svgEl, h.ticker, 625, 150);
+  drawSpark(svgEl, h.ticker, 700, 220);
   } catch(err) {
     console.error('renderDetail error:', err);
     document.getElementById('modal-detail').innerHTML =
       `<div class="detail-empty" style="color:#ff4d6d">JS Error: ${err.message}<br>Check browser console (F12)</div>`;
   }
 }
-
+ 
 function drawSpark(svgEl, ticker, W, H){
   const d = SPARK_DATA[ticker];
-  if(!d || !d.price || d.price.length < 2){ svgEl.innerHTML='<text x="50%" y="50%" fill="#8fa8c8" font-size="10" text-anchor="middle">No chart data</text>'; return; }
-
-  const price  = d.price;
-  const ema20  = d.ema20  || null;
-  const ema50  = d.ema50  || null;
-  const ema200 = d.ema200 || null;
-
-  // ETF overlay series -- rebased to start at the SAME point as the stock's
-  // first price value, so both lines are visually comparable from day 0.
+  if(!d || !d.price || d.price.length < 2){
+    svgEl.innerHTML='<text x="50%" y="50%" fill="#8fa8c8" font-size="10" text-anchor="middle">No chart data</text>';
+    return;
+  }
+ 
+  const price   = d.price;       // normalised series (base=100) for layout
+  const rawPx   = d.prices || null; // actual dollar prices for Y-axis labels
+  const ema20   = d.ema20  || null;
+  const ema50   = d.ema50  || null;
+  const ema200  = d.ema200 || null;
+ 
+  // ETF UNDERLAY — drawn first, behind everything, as context
   let etfSeries = null;
   if(showEtfOverlay && activeEtf && ETF_SPARK_DATA[activeEtf]){
     const raw = ETF_SPARK_DATA[activeEtf];
-    if(raw && raw.length === price.length){
-      const rebase = price[0] / raw[0];
-      etfSeries = raw.map(v => v * rebase);
-    }
+    if(raw && raw.length === price.length) etfSeries = raw;
   }
-
-  // Shared scale across all series so EMAs + ETF overlay line up correctly against price
+ 
+  // Layout: leave left margin for Y-axis labels
+  const padL = 48, padR = 10, padT = 12, padB = 20;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+ 
+  // Shared scale across all normalised series
   const allVals = [...price, ...(ema20||[]), ...(ema50||[]), ...(ema200||[]), ...(etfSeries||[])];
   const mn = Math.min(...allVals), mx = Math.max(...allVals);
   const range = (mx - mn) || 1;
-  const pad = 8;
-
-  const toPts = (series) => series.map((v,i)=>{
-    const x = (i/(series.length-1))*(W-pad*2)+pad;
-    const y = (H-pad*2)-((v-mn)/range)*(H-pad*2)+pad;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
-
+ 
+  const toX = (i, len) => padL + (i / (len-1)) * chartW;
+  const toY = (v) => padT + chartH - ((v - mn) / range) * chartH;
+ 
+  const toPts = (series) => series.map((v,i) =>
+    `${toX(i,series.length).toFixed(1)},${toY(v).toFixed(1)}`
+  ).join(' ');
+ 
   const pricePts = toPts(price);
-  const lastPt = pricePts.split(' ').pop().split(',');
+  const lastPt   = pricePts.split(' ').pop().split(',');
   const priceColor = price[price.length-1] >= price[0] ? '#00e09a' : '#ff4d6d';
   const uid = ticker.replace(/[^a-zA-Z0-9]/g,'_');
-
+ 
+  // Y-axis: compute 4 evenly-spaced price labels from actual prices
+  let yAxisSVG = '';
+  if(rawPx && rawPx.length >= 2){
+    const rawMin = Math.min(...rawPx), rawMax = Math.max(...rawPx);
+    const rawRange = rawMax - rawMin || 1;
+    const ticks = 4;
+    for(let i=0; i<=ticks; i++){
+      const frac = i / ticks;
+      // normalised value for this tick
+      const normVal = mn + frac * range;
+      const yPos = toY(normVal).toFixed(1);
+      // map normalised fraction back to real price
+      const realPrice = rawMin + ((normVal - mn) / range) * rawRange;
+      const label = realPrice >= 1000
+        ? '$' + realPrice.toFixed(0)
+        : realPrice >= 100
+          ? '$' + realPrice.toFixed(1)
+          : '$' + realPrice.toFixed(2);
+      yAxisSVG += `<line x1="${padL-4}" y1="${yPos}" x2="${padL}" y2="${yPos}" stroke="#3a4a5c" stroke-width="0.8"/>`;
+      yAxisSVG += `<text x="${padL-7}" y="${yPos}" fill="#6a8aaa" font-size="8.5" text-anchor="end" dominant-baseline="middle">${label}</text>`;
+      // horizontal grid line across chart
+      yAxisSVG += `<line x1="${padL}" y1="${yPos}" x2="${W-padR}" y2="${yPos}" stroke="#1e2e40" stroke-width="0.6" stroke-dasharray="3,3"/>`;
+    }
+  }
+ 
+  // Legend
+  let legend = `<span style="color:${priceColor}">${ticker}</span>`;
+ 
+  // ETF underlay (drawn first, muted)
+  let etfLine = '';
+  if(etfSeries){
+    etfLine = `<polyline points="${toPts(etfSeries)}" fill="none" stroke="#8fa8c8" stroke-width="1.4" stroke-dasharray="4,3" opacity="0.5"/>`;
+    legend += ` &nbsp; <span style="color:#8fa8c8;opacity:0.7">&#9135;&#9135; ${activeEtf}</span>`;
+  }
+ 
+  // EMA lines
   let emaLines = '';
-  let legend = '<span style="color:#8fa8c8">Price</span>';
   if(ema20){
-    emaLines += `<polyline points="${toPts(ema20)}" fill="none" stroke="#f5a623" stroke-width="1.3" stroke-dasharray="0" opacity="0.85"/>`;
+    emaLines += `<polyline points="${toPts(ema20)}" fill="none" stroke="#f5a623" stroke-width="1.2" opacity="0.8"/>`;
     legend += ' &nbsp; <span style="color:#f5a623">— EMA20</span>';
   }
   if(ema50){
-    emaLines += `<polyline points="${toPts(ema50)}" fill="none" stroke="#6aa3f8" stroke-width="1.3" opacity="0.85"/>`;
+    emaLines += `<polyline points="${toPts(ema50)}" fill="none" stroke="#6aa3f8" stroke-width="1.2" opacity="0.8"/>`;
     legend += ' &nbsp; <span style="color:#6aa3f8">— EMA50</span>';
   }
   if(ema200){
-    emaLines += `<polyline points="${toPts(ema200)}" fill="none" stroke="#c084fc" stroke-width="1.3" opacity="0.85"/>`;
+    emaLines += `<polyline points="${toPts(ema200)}" fill="none" stroke="#c084fc" stroke-width="1.2" opacity="0.8"/>`;
     legend += ' &nbsp; <span style="color:#c084fc">— EMA200</span>';
   }
-  let etfLine = '';
-  if(etfSeries){
-    etfLine = `<polyline points="${toPts(etfSeries)}" fill="none" stroke="#8fa8c8" stroke-width="1.6" stroke-dasharray="5,4" opacity="0.9"/>`;
-    legend += ` &nbsp; <span style="color:#8fa8c8">- - ${activeEtf}</span>`;
-  }
-
+ 
   svgEl.innerHTML = `
     <defs>
       <linearGradient id="sg_${uid}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${priceColor}" stop-opacity="0.25"/>
-        <stop offset="100%" stop-color="${priceColor}" stop-opacity="0.02"/>
+        <stop offset="0%" stop-color="${priceColor}" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="${priceColor}" stop-opacity="0.01"/>
       </linearGradient>
+      <clipPath id="cp_${uid}">
+        <rect x="${padL}" y="${padT}" width="${chartW}" height="${chartH}"/>
+      </clipPath>
     </defs>
-    <polygon points="${pad},${H-pad} ${pricePts} ${W-pad},${H-pad}" fill="url(#sg_${uid})"/>
-    ${etfLine}
-    ${emaLines}
-    <polyline points="${pricePts}" fill="none" stroke="${priceColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${yAxisSVG}
+    <g clip-path="url(#cp_${uid})">
+      ${etfLine}
+      ${emaLines}
+      <polygon points="${padL},${H-padB} ${pricePts} ${W-padR},${H-padB}" fill="url(#sg_${uid})"/>
+      <polyline points="${pricePts}" fill="none" stroke="${priceColor}" stroke-width="2"
+        stroke-linejoin="round" stroke-linecap="round"/>
+    </g>
     <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="4"
-      fill="${priceColor}" stroke="var(--surface2)" stroke-width="2"/>`;
-
+      fill="${priceColor}" stroke="var(--surface2)" stroke-width="2"/>
+    <line id="crosshair_${uid}" x1="-1" y1="${padT}" x2="-1" y2="${H-padB}"
+      stroke="#8fa8c8" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.6"/>`;
+ 
   const legendEl = document.getElementById('spark-legend');
   if(legendEl) legendEl.innerHTML = legend;
+ 
+  // Crosshair + tooltip on mousemove
+  const tooltipEl = document.getElementById('chart-tooltip');
+  const crossEl   = svgEl.querySelector(`#crosshair_${uid}`);
+  const svgRect   = () => svgEl.getBoundingClientRect();
+ 
+  svgEl.addEventListener('mousemove', (e)=>{
+    const r = svgRect();
+    const mouseX = e.clientX - r.left;
+    const relX   = mouseX - padL;
+    if(relX < 0 || relX > chartW){ if(tooltipEl) tooltipEl.style.opacity='0'; return; }
+    const idx = Math.round((relX / chartW) * (price.length - 1));
+    if(idx < 0 || idx >= price.length) return;
+    if(crossEl){ crossEl.setAttribute('x1', mouseX.toFixed(1)); crossEl.setAttribute('x2', mouseX.toFixed(1)); }
+    if(tooltipEl && rawPx){
+      const px = rawPx[idx];
+      const daysAgo = price.length - 1 - idx;
+      const label = daysAgo === 0 ? 'Today' : `${daysAgo}d ago`;
+      tooltipEl.textContent = `$${px.toFixed(2)}  ${label}`;
+      const left = mouseX + 10;
+      const top  = e.clientY - r.top - 28;
+      tooltipEl.style.left  = left + 'px';
+      tooltipEl.style.top   = top  + 'px';
+      tooltipEl.style.opacity = '1';
+    }
+  });
+  svgEl.addEventListener('mouseleave', ()=>{
+    if(tooltipEl) tooltipEl.style.opacity = '0';
+    if(crossEl){ crossEl.setAttribute('x1','-1'); crossEl.setAttribute('x2','-1'); }
+  });
 }
-
+ 
 // -- ETF overlay toggle handler --
 function toggleEtfOverlay(checked){
   showEtfOverlay = checked;
   if(activeTicker){
     const svgEl = document.getElementById('spark-big');
-    if(svgEl) drawSpark(svgEl, activeTicker, 625, 150);
+    if(svgEl) drawSpark(svgEl, activeTicker, 700, 220);
   }
 }
 """
-
+ 
 HTML_TEMPLATE = """<!DOCTYPE html>
-<html lang="en">
+<html lang="{lang}" dir="{dir}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Early Trend Scanner — {date}</title>
+<title>{page_title} — {date}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1078,111 +1413,113 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <style>{css}</style>
 </head>
 <body>
-
+ 
+<a class="lang-toggle" href="{lang_toggle_href}">{lang_toggle_label}</a>
+ 
 <!-- ── Modal overlay ── -->
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <div id="modal-etf-ticker" class="modal-etf-ticker"></div>
+      <div id="modal-etf-ticker" class="modal-etf-ticker" dir="ltr"></div>
       <div id="modal-etf-name"   class="modal-etf-name"></div>
-      <button class="modal-close" onclick="closeModal(event)" title="Close (Esc)">✕</button>
+      <button class="modal-close" onclick="closeModal(event)" title="Close (Esc)">&#x2715;</button>
     </div>
     <div class="modal-body">
       <div class="modal-list">
-        <div class="modal-list-title">Holdings ranked by momentum</div>
+        <div class="modal-list-title">{modal_list_title}</div>
         <div id="modal-list-items"></div>
       </div>
       <div class="modal-detail" id="modal-detail">
-        <div class="detail-empty">← Select a holding to see details &amp; chart</div>
+        <div class="detail-empty">{modal_empty_detail}</div>
       </div>
     </div>
   </div>
 </div>
-
+ 
 <div class="header">
   <div>
-    <h1>EARLY TREND <em>DETECTOR</em></h1>
+    <h1>{h1_main} <em>{h1_em}</em></h1>
     <div class="subtitle">
-      EMA200 reclaim · RS flip · Prior consolidation · Not extended · Click any ETF card → holdings drill-down
+      {subtitle}
     </div>
   </div>
-  <div class="run-meta">{date}<br>Scanned: {total_scanned} ETFs<br>Signals: {total_signals}</div>
+  <div class="run-meta">{date}<br>{scanned}: {total_scanned} {etfs}<br>{signals}: {total_signals}</div>
 </div>
 <div class="stats">
-  <div class="stat"><div class="stat-n n-bull">{cnt_strict}</div> <div class="stat-l">Strict (100+150+200)</div></div>
-  <div class="stat"><div class="stat-n n-acc" >{cnt_medium}</div><div class="stat-l">+Medium (200+150)</div></div>
-  <div class="stat"><div class="stat-n n-loose">{cnt_loose}</div> <div class="stat-l">+Loose (200 only)</div></div>
-  <div class="stat"><div class="stat-n n-flip" >{rs_flips}</div>  <div class="stat-l">Clean RS (Relative Strength) Flips</div></div>
-  <div class="stat"><div class="stat-n n-acc"  >{fresh_signals}</div><div class="stat-l">Fresh signals (5 days or less)</div></div>
+  <div class="stat"><div class="stat-n n-bull" dir="ltr">{cnt_strict}</div> <div class="stat-l">{stat_strict}</div></div>
+  <div class="stat"><div class="stat-n n-acc" dir="ltr">{cnt_medium}</div><div class="stat-l">{stat_medium}</div></div>
+  <div class="stat"><div class="stat-n n-loose" dir="ltr">{cnt_loose}</div> <div class="stat-l">{stat_loose}</div></div>
+  <div class="stat"><div class="stat-n n-flip" dir="ltr">{rs_flips}</div>  <div class="stat-l">{stat_rsflips}</div></div>
+  <div class="stat"><div class="stat-n n-acc" dir="ltr">{fresh_signals}</div><div class="stat-l">{stat_fresh}</div></div>
 </div>
 <div class="tab-bar">
-  <button class="tab-btn active" id="tab-btn-signals" onclick="switchTab('signals')">SIGNALS</button>
-  <button class="tab-btn" id="tab-btn-universe" onclick="switchTab('universe')">ETF UNIVERSE</button>
+  <button class="tab-btn active" id="tab-btn-signals" onclick="switchTab('signals')">{tab_signals}</button>
+  <button class="tab-btn" id="tab-btn-universe" onclick="switchTab('universe')">{tab_universe}</button>
 </div>
-
+ 
 <div class="tab-pane active" id="tab-pane-signals">
 <div class="mode-bar">
-  <span class="mode-label">EMA Filter:</span>
-  <button class="mode-btn active-strict" id="btn-strict" onclick="setMode('strict')">STRICT — above EMA100 + EMA150 + EMA200</button>
-  <button class="mode-btn" id="btn-medium" onclick="setMode('medium')">MEDIUM — above EMA200 + EMA150 only</button>
-  <button class="mode-btn" id="btn-loose"  onclick="setMode('loose')">LOOSE — above EMA200 only</button>
-  <span class="mode-desc" id="mode-desc">Showing highest-conviction signals only</span>
+  <span class="mode-label">{ema_filter_label}</span>
+  <button class="mode-btn active-strict" id="btn-strict" onclick="setMode('strict')">{btn_strict}</button>
+  <button class="mode-btn" id="btn-medium" onclick="setMode('medium')">{btn_medium}</button>
+  <button class="mode-btn" id="btn-loose"  onclick="setMode('loose')">{btn_loose}</button>
+  <span class="mode-desc" id="mode-desc">{mode_desc_strict}</span>
 </div>
 <div id="results">{results_html}</div>
 <div class="methodology">
-  <strong>ETF Signal conditions (all required):</strong><br>
-  1. <strong>Above EMA200</strong> — current price above EMA200<br>
-  2. <strong>EMA200 Reclaim</strong> — crossed above EMA200 within last 20 trading days (was below >= 5 days prior)<br>
-  3. <strong>EMA200 Slope</strong> — EMA200 is flat or rising (not in a downtrend)<br>
-  4. <strong>Not Extended</strong> — price within 20% of reclaim point<br>
-  5. <strong>RS Improving</strong> — RS vs SPY was negative 25d ago, positive now (or 4pp+ swing)<br>
-  6. <strong>Prior Consolidation</strong> — price moved less than 20% in 60 days before reclaim<br><br>
-  <strong>Holdings momentum score (0-10):</strong>
-  1W &gt;0% +1 · 1W &gt;3% +1 · 1M &gt;5% +1 · 1M &gt;15% +1 · 3M &gt;15% +1 · 3M &gt;30% +1 · Above EMA20 +1 · Above EMA50 +1 · Above EMA200 +1 · Within 10% of 52W High +1
+  <strong>{methodology_title}</strong><br>
+  1. {methodology_1}<br>
+  2. {methodology_2}<br>
+  3. {methodology_3}<br>
+  4. {methodology_4}<br>
+  5. {methodology_5}<br>
+  6. {methodology_6}<br><br>
+  <strong>{methodology_score_title}</strong>
+  {methodology_score_body}
 </div>
 </div>
-
+ 
 <div class="tab-pane" id="tab-pane-universe">
 <div class="universe-hint">
-  Full ETF universe scanned each run. To add a new ETF, insert it into the TICKERS dict in ema_scan_v4.py and add its top holdings to the HOLDINGS dict.
+  {universe_hint}
 </div>
 {universe_html}
 </div>
-<div class="footer">Data: Yahoo Finance · Not investment advice · Do your own research</div>
+<div class="footer">{footer}</div>
 <script>{js}</script>
 </body>
 </html>"""
-
+ 
 def tip(label, explanation):
     """Wrap a label in a hoverable tooltip span. Used for badges/labels
     across the dashboard so users can hover/tap to see what a term means."""
     return f'<span class="tip" tabindex="0">{label}<span class="tip-bubble">{explanation}</span></span>'
-
-
+ 
+ 
 def fmt_pct(v, show_plus=True):
     if v is None: return "n/a"
     s = f"{v:+.1f}%" if show_plus else f"{v:.1f}%"
     return s
-
-def render_card(ticker, name, group, sig, holdings_data):
+ 
+def render_card(ticker, name, group, sig, holdings_data, lang="en"):
     """ETF card — clicking opens the modal. No inline drill-down."""
     mode = sig["ema_mode"]
-    mode_badge = {"strict": f'<span class="badge b-fresh">{tip("STRICT &#x2713;", "Price is above EMA100, EMA150, and EMA200 simultaneously &mdash; the highest-conviction signal tier.")}</span>',
-                  "medium150": f'<span class="badge b-med">{tip("MEDIUM", "Price is above EMA200 and EMA150, but may still be below EMA100. A moderate-conviction signal.")}</span>',
-                  "loose": f'<span class="badge b-loose">{tip("LOOSE", "Price is only above EMA200. The broadest, lowest-conviction signal tier.")}</span>'}[mode]
-    flip_badge = (f'<span class="badge b-flip">{tip("RS FLIP &#x2713;", "Relative Strength Flip: this ETF was underperforming SPY (the S&amp;P 500) 25 days ago and has since flipped to outperforming it &mdash; or swung by 4+ percentage points. A sign the trend is genuinely changing, not just drifting with the market.")}</span>'
+    mode_badge = {
+        "strict": f'<span class="badge b-fresh">{tip(t(lang,"badge_strict"), t(lang,"tip_strict"))}</span>',
+        "medium150": f'<span class="badge b-med">{tip(t(lang,"badge_medium"), t(lang,"tip_medium"))}</span>',
+        "loose": f'<span class="badge b-loose">{tip(t(lang,"badge_loose"), t(lang,"tip_loose"))}</span>',
+    }[mode]
+    flip_badge = (f'<span class="badge b-flip">{tip(t(lang,"badge_rsflip"), t(lang,"tip_rsflip"))}</span>'
                   if sig["rs_flipped"] else "")
     flip_dot   = "dot-flip" if sig["rs_flipped"] else "dot-on"
     above100, above150 = sig["above100"], sig["above150"]
-    # Safe JS string: escape quotes in name
     safe_name = name.replace("'", "\\'").replace('"', '&quot;')
     n_holdings = len(holdings_data)
     if n_holdings > 0:
-        drill_hint = f"▶ &nbsp; {n_holdings} holdings in momentum — click to explore"
+        drill_hint = t(lang, "drill_hint_n", n=n_holdings)
     else:
-        drill_hint = "▶ &nbsp; No holdings currently in momentum"
-
-    # Momentum score badge (color-coded by tier)
+        drill_hint = t(lang, "drill_hint_none")
+ 
     mscore = sig.get("momentum_score")
     mrank  = sig.get("momentum_rank")
     if mscore is not None:
@@ -1190,55 +1527,60 @@ def render_card(ticker, name, group, sig, holdings_data):
         elif mscore >= 45: mscore_css = "mscore-mid"
         else:              mscore_css = "mscore-low"
         mscore_html = f'''<div class="mscore-block {mscore_css}">
-      <div class="mscore-rank">#{mrank}</div>
-      <div class="mscore-num">{mscore:.0f}</div>
-      <div class="mscore-lbl">{tip("MOMENTUM<br>SCORE", "A 0-100 composite score combining reclaim freshness, RS swing size, how extended the price is, EMA stack depth, base tightness, and breadth of qualifying holdings. Higher = stronger, fresher trend. ETFs are ranked by this score.")}</div>
+      <div class="mscore-rank" dir="ltr">#{mrank}</div>
+      <div class="mscore-num" dir="ltr">{mscore:.0f}</div>
+      <div class="mscore-lbl">{tip(t(lang,"mscore_label"), t(lang,"tip_momentum"))}</div>
     </div>'''
     else:
         mscore_html = ""
-
+ 
+    reclaim_badge_text = t(lang, "badge_reclaim", days=sig['days_since_reclaim'])
+    fromentry_badge_text = t(lang, "badge_fromentry", pct=f"{sig['extension_pct']:.1f}")
+    above100_pct = f"{'+' if above100 else '-'}{abs(sig['pct_above_ema100']):.1f}%"
+    above150_pct = f"{'+' if above150 else '-'}{abs(sig['pct_above_ema150']):.1f}%"
+ 
     return f"""<div class="card" data-mode="{mode}"
   onclick="openModal('{ticker}', '{safe_name}', event)">
   <div class="card-top">
     <div class="card-head">
       {mscore_html}
       <div class="ticker-block">
-        <div class="ticker">{ticker}</div>
+        <div class="ticker" dir="ltr">{ticker}</div>
         <div class="ticker-name">{name}</div>
         <span class="grp-tag">{group}</span>
       </div>
       <div class="badges">
-        <span class="badge b-fresh">{tip(f"RECLAIM {sig['days_since_reclaim']}d AGO", "Days since price first crossed back above the EMA200, after having been below it for at least 5 trading days. Fresher reclaims (lower numbers) suggest an earlier-stage trend.")}</span>
+        <span class="badge b-fresh">{tip(reclaim_badge_text, t(lang,"tip_reclaim"))}</span>
         {flip_badge}{mode_badge}
-        <span class="badge b-ext">{tip(f"+{sig['extension_pct']:.1f}% FROM ENTRY", "How far price has moved from the EMA200 reclaim point. Lower numbers mean the move is fresher and less extended &mdash; potentially more room left to run.")}</span>
+        <span class="badge b-ext">{tip(fromentry_badge_text, t(lang,"tip_fromentry"))}</span>
       </div>
     </div>
     <div class="metrics">
-      <div class="m"><div class="m-v">${sig['price']}</div><div class="m-l">Price</div></div>
-      <div class="m"><div class="m-v {'pos' if sig['rs_now']>0 else 'neg'}">{sig['rs_now']:+.1f}%</div><div class="m-l">{tip("RS vs SPY", "Relative Strength vs SPY: this ETF's return minus SPY's return over the same window. Positive means it's outperforming the broad market, not just rising with it.")}</div></div>
-      <div class="m"><div class="m-v {'pos' if sig['rs_prev']>0 else 'neg'}">{sig['rs_prev']:+.1f}%</div><div class="m-l">{tip("RS 25d Ago", "What the Relative Strength reading was 25 trading days ago, for comparison against today's value &mdash; this is what flips from negative to positive in an RS Flip.")}</div></div>
-      <div class="m"><div class="m-v">${sig['reclaim_price']}</div><div class="m-l">Reclaim Price</div></div>
-      <div class="m"><div class="m-v hl">{sig['consolidation_range_pct']:.1f}%</div><div class="m-l">{tip("Prior Range", "The price range (high vs low) in the 60 days before the EMA200 reclaim. A tighter range suggests a cleaner base before the breakout.")}</div></div>
-      <div class="m"><div class="m-v pos">+{sig['pct_above_ema200']:.1f}%</div><div class="m-l">vs EMA200</div></div>
+      <div class="m"><div class="m-v" dir="ltr">${sig['price']}</div><div class="m-l">{t(lang,"lbl_price")}</div></div>
+      <div class="m"><div class="m-v {'pos' if sig['rs_now']>0 else 'neg'}" dir="ltr">{sig['rs_now']:+.1f}%</div><div class="m-l">{tip(t(lang,"lbl_rsvsspy"), t(lang,"tip_rsvsspy"))}</div></div>
+      <div class="m"><div class="m-v {'pos' if sig['rs_prev']>0 else 'neg'}" dir="ltr">{sig['rs_prev']:+.1f}%</div><div class="m-l">{tip(t(lang,"lbl_rs25d"), t(lang,"tip_rs25d"))}</div></div>
+      <div class="m"><div class="m-v" dir="ltr">${sig['reclaim_price']}</div><div class="m-l">{t(lang,"lbl_reclaimprice")}</div></div>
+      <div class="m"><div class="m-v hl" dir="ltr">{sig['consolidation_range_pct']:.1f}%</div><div class="m-l">{tip(t(lang,"lbl_priorrange"), t(lang,"tip_priorrange"))}</div></div>
+      <div class="m"><div class="m-v pos" dir="ltr">+{sig['pct_above_ema200']:.1f}%</div><div class="m-l">{t(lang,"lbl_vsema200")}</div></div>
     </div>
     <div class="ema-stack">
-      <span class="ema-pill {'ep-on' if above100 else 'ep-off'}">{tip(f"EMA100 ${sig['ema100']} ({'+' if above100 else '-'}{abs(sig['pct_above_ema100']):.1f}%)", "100-day Exponential Moving Average. A medium-term trend reference &mdash; price above it is a bullish sign on that timeframe.")}</span>
-      <span class="ema-pill {'ep-on' if above150 else 'ep-off'}">{tip(f"EMA150 ${sig['ema150']} ({'+' if above150 else '-'}{abs(sig['pct_above_ema150']):.1f}%)", "150-day Exponential Moving Average. Sits between the EMA100 and EMA200 in sensitivity.")}</span>
-      <span class="ema-pill ep-on">{tip(f"EMA200 ${sig['ema200']} (+{sig['pct_above_ema200']:.1f}%)", "200-day Exponential Moving Average. The core long-term trend line this entire scanner is built around &mdash; reclaiming it is the primary signal.")}</span>
+      <span class="ema-pill {'ep-on' if above100 else 'ep-off'}" dir="ltr">{tip(f"EMA100 ${sig['ema100']} ({above100_pct})", t(lang,"tip_ema100"))}</span>
+      <span class="ema-pill {'ep-on' if above150 else 'ep-off'}" dir="ltr">{tip(f"EMA150 ${sig['ema150']} ({above150_pct})", t(lang,"tip_ema150"))}</span>
+      <span class="ema-pill ep-on" dir="ltr">{tip(f"EMA200 ${sig['ema200']} (+{sig['pct_above_ema200']:.1f}%)", t(lang,"tip_ema200"))}</span>
     </div>
     <div class="signals">
-      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">EMA200 &#x2713;</span></div>
-      <div class="sig"><span class="dot {'dot-on' if above150 else 'dot-off'}"></span><span class="sig-lbl">EMA150</span></div>
-      <div class="sig"><span class="dot {'dot-on' if above100 else 'dot-off'}"></span><span class="sig-lbl">EMA100</span></div>
-      <div class="sig"><span class="dot {flip_dot}"></span><span class="sig-lbl">{tip("RS FLIP", "Whether Relative Strength vs SPY has flipped from negative to positive (or swung sharply) in the last 25 days.")}</span></div>
-      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">{tip("CONSOLIDATION &#x2713;", "Confirms price moved less than 20% in the 60 days before the reclaim &mdash; i.e. it was basing quietly, not already trending hard.")}</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">{t(lang,"sig_ema200")}</span></div>
+      <div class="sig"><span class="dot {'dot-on' if above150 else 'dot-off'}"></span><span class="sig-lbl">{t(lang,"sig_ema150")}</span></div>
+      <div class="sig"><span class="dot {'dot-on' if above100 else 'dot-off'}"></span><span class="sig-lbl">{t(lang,"sig_ema100")}</span></div>
+      <div class="sig"><span class="dot {flip_dot}"></span><span class="sig-lbl">{tip(t(lang,"sig_rsflip"), t(lang,"tip_rsflip_dot"))}</span></div>
+      <div class="sig"><span class="dot dot-on"></span><span class="sig-lbl">{tip(t(lang,"sig_consolidation"), t(lang,"tip_consolidation"))}</span></div>
     </div>
     <div class="drill-hint">{drill_hint}</div>
   </div>
 </div>"""
-
+ 
 # ── Main ──────────────────────────────────────────────────────────────────────
-def build_universe_html(flagged_map):
+def build_universe_html(flagged_map, lang="en"):
     """Build ETF universe table. flagged_map: {ticker: ema_mode}"""
     html = ""
     for group, tmap in TICKERS.items():
@@ -1246,46 +1588,161 @@ def build_universe_html(flagged_map):
         for ticker, name in tmap.items():
             mode = flagged_map.get(ticker)
             if mode == "strict":
-                flag = '<span class="u-flag u-flag-strict">STRICT</span>'
+                flag = f'<span class="u-flag u-flag-strict">{t(lang,"u_strict")}</span>'
             elif mode == "medium150":
-                flag = '<span class="u-flag u-flag-medium">MEDIUM</span>'
+                flag = f'<span class="u-flag u-flag-medium">{t(lang,"badge_medium")}</span>'
             elif mode == "loose":
-                flag = '<span class="u-flag u-flag-loose">LOOSE</span>'
+                flag = f'<span class="u-flag u-flag-loose">{t(lang,"badge_loose")}</span>'
             else:
-                flag = '<span class="u-flag-none">—</span>'
+                flag = '<span class="u-flag-none">&mdash;</span>'
             n_holdings = len(HOLDINGS.get(ticker, []))
             rows += f"""<tr>
-  <td><span class="u-ticker">{ticker}</span></td>
+  <td><span class="u-ticker" dir="ltr">{ticker}</span></td>
   <td><span class="u-name">{name}</span></td>
   <td>{flag}</td>
-  <td><span class="u-holdings">{n_holdings} holdings mapped</span></td>
+  <td><span class="u-holdings">{t(lang,"universe_holdings_mapped", n=n_holdings)}</span></td>
 </tr>"""
         html += f"""<div class="universe-group">
   <div class="universe-group-label">{group}</div>
   <table class="universe-table">
     <thead><tr>
-      <th>Ticker</th><th>Name</th><th>Signal</th><th>Holdings</th>
+      <th>{t(lang,"universe_th_ticker")}</th><th>{t(lang,"universe_th_name")}</th><th>{t(lang,"universe_th_signal")}</th><th>{t(lang,"universe_th_holdings")}</th>
     </tr></thead>
     <tbody>{rows}</tbody>
   </table>
 </div>"""
     return html
-
-
+ 
+ 
+def ascii_safe(s):
+    return (s.replace('✓', 'ON').replace('✗', 'OFF').replace('←', '<-')
+             .encode("ascii", "replace").decode("ascii"))
+ 
+ 
+def build_html(lang, found, holdings_by_etf, spark_data, etf_spark_data,
+                all_tickers, total_signals, cnt_strict, cnt_medium, cnt_loose,
+                rs_flips, fresh, run_date_str):
+    """Build the full HTML page for one language from already-computed scan
+    results. Pure rendering — no network calls happen here."""
+    groups_seen = {}
+    for ticker, name, group, sig in found:
+        groups_seen.setdefault(group, []).append((ticker, name, sig))
+ 
+    results_html = ""
+    for group, items in groups_seen.items():
+        results_html += f'<div class="section-group"><div class="section-label">{group}</div><div class="cards">'
+        for ticker, name, sig in items:
+            h_list = holdings_by_etf.get(ticker, [])
+            results_html += render_card(ticker, name, group, sig, h_list, lang=lang)
+        results_html += "</div></div>"
+ 
+    if not results_html:
+        results_html = f'<div class="cards"><div class="empty">{t(lang,"empty_no_signals")}</div></div>'
+ 
+    holdings_for_js = {}
+    SPARK_KEYS = {"spark", "spark_prices", "spark_ema20", "spark_ema50", "spark_ema200"}
+    for ticker, h_list in holdings_by_etf.items():
+        holdings_for_js[ticker] = [{k: v for k, v in h.items() if k not in SPARK_KEYS} for h in h_list]
+ 
+    ui_strings = {
+        "chart_60d_ago":          t(lang, "chart_60d_ago"),
+        "chart_show_etf_prefix":  t(lang, "chart_show_etf_prefix"),
+        "chart_title":            t(lang, "chart_title"),
+        "chart_today":            t(lang, "chart_today"),
+        "detail_1m":              t(lang, "detail_1m"),
+        "detail_1w":              t(lang, "detail_1w"),
+        "detail_3m":              t(lang, "detail_3m"),
+        "detail_momentum_lbl":    t(lang, "detail_momentum_lbl"),
+        "detail_rsvsspy":         t(lang, "detail_rsvsspy"),
+        "modal_empty_detail":     t(lang, "modal_empty_detail"),
+        "modal_no_holdings":      t(lang, "modal_no_holdings"),
+        "tip_detail_ema200":      t(lang, "tip_detail_ema200"),
+        "tip_detail_ema20":       t(lang, "tip_detail_ema20"),
+        "tip_detail_ema50":       t(lang, "tip_detail_ema50"),
+        "tip_detail_rsvsspy":     t(lang, "tip_detail_rsvsspy"),
+        "mode_desc_loose":        t(lang, "mode_desc_loose"),
+        "mode_desc_medium":       t(lang, "mode_desc_medium"),
+        "mode_desc_strict":       t(lang, "mode_desc_strict"),
+    }
+ 
+    js_final = ascii_safe(JS \
+        .replace("__SPARK_JSON__",     json.dumps(spark_data)) \
+        .replace("__HOLDINGS_JSON__",  json.dumps(holdings_for_js)) \
+        .replace("__ETF_SPARK_JSON__", json.dumps(etf_spark_data)) \
+        .replace("__UI_STRINGS_JSON__", json.dumps(ui_strings)))
+ 
+    flagged_map = {ticker: sig["ema_mode"] for ticker, _, _, sig in found}
+    universe_html = build_universe_html(flagged_map, lang=lang)
+ 
+    direction = "rtl" if lang == "he" else "ltr"
+ 
+    html = HTML_TEMPLATE \
+        .replace("{lang}",              lang) \
+        .replace("{dir}",                direction) \
+        .replace("{page_title}",        t(lang, "page_title")) \
+        .replace("{css}",               ascii_safe(CSS)) \
+        .replace("{js}",                js_final) \
+        .replace("{date}",              run_date_str) \
+        .replace("{lang_toggle_href}",  t(lang, "lang_toggle_href")) \
+        .replace("{lang_toggle_label}", t(lang, "lang_toggle")) \
+        .replace("{modal_list_title}", t(lang, "modal_list_title")) \
+        .replace("{modal_empty_detail}", t(lang, "modal_empty_detail")) \
+        .replace("{h1_main}",           t(lang, "h1_main")) \
+        .replace("{h1_em}",             t(lang, "h1_em")) \
+        .replace("{subtitle}",          t(lang, "subtitle")) \
+        .replace("{scanned}",           t(lang, "scanned")) \
+        .replace("{etfs}",              t(lang, "etfs")) \
+        .replace("{signals}",           t(lang, "signals")) \
+        .replace("{total_scanned}",     str(len(all_tickers))) \
+        .replace("{total_signals}",     str(total_signals)) \
+        .replace("{cnt_strict}",        str(cnt_strict)) \
+        .replace("{cnt_medium}",        str(cnt_medium)) \
+        .replace("{cnt_loose}",         str(cnt_loose)) \
+        .replace("{rs_flips}",          str(rs_flips)) \
+        .replace("{fresh_signals}",     str(fresh)) \
+        .replace("{stat_strict}",       t(lang, "stat_strict")) \
+        .replace("{stat_medium}",       t(lang, "stat_medium")) \
+        .replace("{stat_loose}",        t(lang, "stat_loose")) \
+        .replace("{stat_rsflips}",      t(lang, "stat_rsflips")) \
+        .replace("{stat_fresh}",        t(lang, "stat_fresh")) \
+        .replace("{tab_signals}",       t(lang, "tab_signals")) \
+        .replace("{tab_universe}",      t(lang, "tab_universe")) \
+        .replace("{ema_filter_label}",  t(lang, "ema_filter_label")) \
+        .replace("{btn_strict}",        t(lang, "btn_strict")) \
+        .replace("{btn_medium}",        t(lang, "btn_medium")) \
+        .replace("{btn_loose}",         t(lang, "btn_loose")) \
+        .replace("{mode_desc_strict}",  t(lang, "mode_desc_strict")) \
+        .replace("{results_html}",      results_html) \
+        .replace("{methodology_title}", t(lang, "methodology_title")) \
+        .replace("{methodology_1}",     t(lang, "methodology_1")) \
+        .replace("{methodology_2}",     t(lang, "methodology_2")) \
+        .replace("{methodology_3}",     t(lang, "methodology_3")) \
+        .replace("{methodology_4}",     t(lang, "methodology_4")) \
+        .replace("{methodology_5}",     t(lang, "methodology_5")) \
+        .replace("{methodology_6}",     t(lang, "methodology_6")) \
+        .replace("{methodology_score_title}", t(lang, "methodology_score_title")) \
+        .replace("{methodology_score_body}",  t(lang, "methodology_score_body")) \
+        .replace("{universe_hint}",     t(lang, "universe_hint")) \
+        .replace("{universe_html}",     universe_html) \
+        .replace("{footer}",            t(lang, "footer"))
+ 
+    return html
+ 
+ 
 def main():
     print(f"\n{'='*60}")
-    print(f"EARLY TREND SCANNER v6.0 [Responsive: Sora/Noto Sans, mobile layer added] — {datetime.today().strftime('%A, %B %d, %Y')}")
+    print(f"EARLY TREND SCANNER v7.0 [EN + HE dual-language, RTL support] — {datetime.today().strftime('%A, %B %d, %Y')}")
     print(f"{'='*60}\n")
-
+ 
     print("Fetching benchmark (SPY)...")
     spy_close = fetch_close(BENCHMARK)
     if spy_close is None:
         sys.exit("Could not fetch SPY. Check internet connection.")
-
-    all_tickers = [(t, n, grp) for grp, tmap in TICKERS.items() for t, n in tmap.items()]
+ 
+    all_tickers = [(t_, n, grp) for grp, tmap in TICKERS.items() for t_, n in tmap.items()]
     found = []
-
-    # Phase 1: scan ETFs
+ 
+    # Phase 1: scan ETFs (language-independent — pure numeric analysis)
     print("\n── Phase 1: ETF scan ──")
     for ticker, name, group in all_tickers:
         print(f"  {ticker:<6} {name[:35]:<35} ...", end=" ", flush=True)
@@ -1298,108 +1755,70 @@ def main():
             print(f"✓ [{sig['ema_mode'].upper():<8}]  reclaim={sig['days_since_reclaim']}d  RS:{sig['rs_prev']:+.1f}%→{sig['rs_now']:+.1f}%  ext={sig['extension_pct']:.1f}%")
         else:
             print("—")
-
+ 
     found.sort(key=lambda x: (x[3]["days_since_reclaim"], x[3]["extension_pct"]))
-
-    # Phase 2: holdings drill-down for flagged ETFs
+ 
+    # Phase 2: holdings drill-down for flagged ETFs (also language-independent)
     print(f"\n── Phase 2: Holdings analysis for {len(found)} flagged ETF(s) ──")
-    spark_data = {}  # ticker -> {price, ema20, ema50, ema200} normalised series
+    spark_data = {}
     holdings_by_etf = {}
-    etf_spark_data = {}  # ETF ticker -> own normalised 60d price series (for overlay)
+    etf_spark_data = {}
     for ticker, name, group, sig in found:
         print(f"\n  {ticker} — fetching holdings...")
         h_list = analyse_holdings(ticker, spy_close)
         holdings_by_etf[ticker] = h_list
-        # Collect spark data for all holdings
         for h in h_list:
             spark_data[h["ticker"]] = {
                 "price":  h["spark"],
+                "prices": h["spark_prices"],
                 "ema20":  h["spark_ema20"],
                 "ema50":  h["spark_ema50"],
                 "ema200": h["spark_ema200"],
             }
-        # ETF's own 60-day spark (for the overlay-on-stock-chart feature)
-        etf_close = fetch_close(ticker, period_days=400)
-        if etf_close is not None and len(etf_close) >= 60:
-            etf_raw = etf_close.tail(60).tolist()
+        etf_close = fetch_close(ticker, period_days=500)
+        if etf_close is not None and len(etf_close) >= 126:
+            etf_raw = etf_close.tail(126).tolist()
             etf_base = etf_raw[0] if etf_raw[0] != 0 else 1
             etf_spark_data[ticker] = [round(v / etf_base * 100, 2) for v in etf_raw]
-        # Momentum score: needs qualified vs total holdings count
         n_total = len(HOLDINGS.get(ticker, []))
         n_qualified = len(h_list)
         sig["momentum_score"] = score_etf_momentum(sig, n_qualified, n_total)
-
-    # Rank flagged ETFs by momentum score (highest first)
+ 
     found.sort(key=lambda x: -x[3]["momentum_score"])
     for rank, (ticker, name, group, sig) in enumerate(found, start=1):
         sig["momentum_rank"] = rank
-
-    # Build HTML
-    groups_seen = {}
-    for ticker, name, group, sig in found:
-        groups_seen.setdefault(group, []).append((ticker, name, sig))
-
-    results_html = ""
-    for group, items in groups_seen.items():
-        results_html += f'<div class="section-group"><div class="section-label">{group}</div><div class="cards">'
-        for ticker, name, sig in items:
-            h_list = holdings_by_etf.get(ticker, [])
-            results_html += render_card(ticker, name, group, sig, h_list)
-        results_html += "</div></div>"
-
-    if not results_html:
-        results_html = '<div class="cards"><div class="empty">No signals this week.<br>Market extended or in consolidation — stay patient.</div></div>'
-
+ 
     cnt_strict = sum(1 for _,_,_,s in found if s["ema_mode"] == "strict")
     cnt_medium = sum(1 for _,_,_,s in found if s["ema_mode"] in ("strict","medium150"))
     cnt_loose  = len(found)
     rs_flips   = sum(1 for _,_,_,s in found if s["rs_flipped"])
     fresh      = sum(1 for _,_,_,s in found if s["days_since_reclaim"] <= 5)
-
-    # Build holdings JSON for modal (strip spark from main payload; spark goes separately)
-    holdings_for_js = {}
-    for ticker, h_list in holdings_by_etf.items():
-        SPARK_KEYS = {"spark", "spark_ema20", "spark_ema50", "spark_ema200"}
-        holdings_for_js[ticker] = [{k: v for k, v in h.items() if k not in SPARK_KEYS} for h in h_list]
-
-    def ascii_safe(s):
-        return (s.replace('✓', 'ON').replace('✗', 'OFF').replace('←', '<-')
-                 .encode("ascii", "replace").decode("ascii"))
-
-    js_final = ascii_safe(JS \
-        .replace("__SPARK_JSON__",     json.dumps(spark_data)) \
-        .replace("__HOLDINGS_JSON__",  json.dumps(holdings_for_js)) \
-        .replace("__ETF_SPARK_JSON__", json.dumps(etf_spark_data)))
-
-    flagged_map = {ticker: sig["ema_mode"] for ticker, _, _, sig in found}
-    universe_html = build_universe_html(flagged_map)
-
-    html = HTML_TEMPLATE \
-        .replace("{css}",           ascii_safe(CSS)) \
-        .replace("{js}",            js_final) \
-        .replace("{date}",          datetime.today().strftime("%A, %B %d, %Y at %H:%M")) \
-        .replace("{total_scanned}", str(len(all_tickers))) \
-        .replace("{total_signals}", str(len(found))) \
-        .replace("{cnt_strict}",    str(cnt_strict)) \
-        .replace("{cnt_medium}",    str(cnt_medium)) \
-        .replace("{cnt_loose}",     str(cnt_loose)) \
-        .replace("{rs_flips}",      str(rs_flips)) \
-        .replace("{fresh_signals}", str(fresh)) \
-        .replace("{results_html}",  results_html) \
-        .replace("{universe_html}", universe_html)
-
-    out_file = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "docs", "index.html"
-    )
-    os.makedirs(os.path.dirname(out_file), exist_ok=True)
-    with open(out_file, "w", encoding="utf-8-sig") as f:
-        f.write(html)
-
+    run_date_str = datetime.today().strftime("%A, %B %d, %Y at %H:%M")
+ 
+    docs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
+ 
+    # ── Hebrew page → docs/index.html (default landing page) ──
+    html_he = build_html("he", found, holdings_by_etf, spark_data, etf_spark_data,
+                          all_tickers, len(found), cnt_strict, cnt_medium, cnt_loose,
+                          rs_flips, fresh, run_date_str)
+    os.makedirs(docs_dir, exist_ok=True)
+    with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8-sig") as f:
+        f.write(html_he)
+ 
+    # ── English page → docs/en/index.html ──
+    html_en = build_html("en", found, holdings_by_etf, spark_data, etf_spark_data,
+                          all_tickers, len(found), cnt_strict, cnt_medium, cnt_loose,
+                          rs_flips, fresh, run_date_str)
+    en_dir = os.path.join(docs_dir, "en")
+    os.makedirs(en_dir, exist_ok=True)
+    with open(os.path.join(en_dir, "index.html"), "w", encoding="utf-8-sig") as f:
+        f.write(html_en)
+ 
     print(f"\n{'='*60}")
     print(f"Strict:{cnt_strict}  Medium:{cnt_medium}  Loose:{cnt_loose}  RS Flips:{rs_flips}  Fresh:{fresh}")
-    print(f"Report → {out_file}")
+    print(f"Hebrew (default) → {os.path.join(docs_dir, 'index.html')}")
+    print(f"English          → {os.path.join(en_dir, 'index.html')}")
     print(f"{'='*60}\n")
-
+ 
 if __name__ == "__main__":
     main()
