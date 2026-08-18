@@ -1414,8 +1414,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
  
-<a class="lang-toggle" href="{lang_toggle_href}">{lang_toggle_label}</a>
- 
 <!-- ── Modal overlay ── -->
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal" onclick="event.stopPropagation()">
@@ -1797,27 +1795,17 @@ def main():
  
     docs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
  
-    # ── Hebrew page → docs/index.html (default landing page) ──
-    html_he = build_html("he", found, holdings_by_etf, spark_data, etf_spark_data,
+    # ── English page → docs/index.html (Hebrew removed, single-language site) ──
+    html_en = build_html("en", found, holdings_by_etf, spark_data, etf_spark_data,
                           all_tickers, len(found), cnt_strict, cnt_medium, cnt_loose,
                           rs_flips, fresh, run_date_str)
     os.makedirs(docs_dir, exist_ok=True)
     with open(os.path.join(docs_dir, "index.html"), "w", encoding="utf-8-sig") as f:
-        f.write(html_he)
- 
-    # ── English page → docs/en/index.html ──
-    html_en = build_html("en", found, holdings_by_etf, spark_data, etf_spark_data,
-                          all_tickers, len(found), cnt_strict, cnt_medium, cnt_loose,
-                          rs_flips, fresh, run_date_str)
-    en_dir = os.path.join(docs_dir, "en")
-    os.makedirs(en_dir, exist_ok=True)
-    with open(os.path.join(en_dir, "index.html"), "w", encoding="utf-8-sig") as f:
         f.write(html_en)
  
     print(f"\n{'='*60}")
     print(f"Strict:{cnt_strict}  Medium:{cnt_medium}  Loose:{cnt_loose}  RS Flips:{rs_flips}  Fresh:{fresh}")
-    print(f"Hebrew (default) → {os.path.join(docs_dir, 'index.html')}")
-    print(f"English          → {os.path.join(en_dir, 'index.html')}")
+    print(f"Report → {os.path.join(docs_dir, 'index.html')}")
     print(f"{'='*60}\n")
  
 if __name__ == "__main__":
