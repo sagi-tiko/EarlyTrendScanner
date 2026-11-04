@@ -34,7 +34,7 @@ jobs:
         run: pip install -r requirements.txt
  
       - name: Run scanner
-        run: python ema_scan_v6.py
+        run: python ema_scan_v9.py
  
       - name: Check for meaningful changes
         id: diffcheck
