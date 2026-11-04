@@ -32,6 +32,7 @@ T = {
         "tab_universe": "ETF UNIVERSE",
         "ema_filter_label": "EMA Filter:",
         "btn_strict": "STRICT &mdash; above EMA100 + EMA150 + EMA200",
+        "stat_super": "SUPER (15%+ upside to 180-day high)",
         "btn_super": "SUPER &mdash; 15%+ upside to 180-day high",
         "btn_all": "SHOW ALL SIGNALS",
         "mode_desc_all": "Showing all signals",
@@ -135,6 +136,7 @@ T = {
         "ema_filter_label": ":&#x5e4;&#x5d9;&#x5dc;&#x5d8;&#x5e8; EMA",
         "btn_strict": "&#x5de;&#x5d5;&#x5d2;&#x5d1;&#x5e8; &mdash; &#x5de;&#x5e2;&#x5dc; EMA100 + EMA150 + EMA200",
         "btn_medium": "&#x5d1;&#x5d9;&#x5e0;&#x5d5;&#x5e0;&#x5d9;&#x5d9;&#x5dd; &mdash; &#x5de;&#x5e2;&#x5dc; EMA200 + EMA150 &#x5d1;&#x5dc;&#x5d1;&#x5d3;",
+        "stat_super": "SUPER (15%+ upside to 180-day high)",
         "btn_super": "SUPER &mdash; 15%+",
         "btn_all": "ALL",
         "mode_desc_all": "Showing all signals",
@@ -731,7 +733,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif;p
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.4rem;flex:1;min-width:120px}
 .stat-n{font-size:2.6rem;font-weight:800;line-height:1;margin-bottom:.3rem}
 .stat-l{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:#8fa8c8}
-.n-bull{color:var(--bull)} .n-acc{color:var(--accent)} .n-flip{color:var(--flip)} .n-loose{color:var(--loose)}
+.n-super{color:#facc15} .n-bull{color:var(--bull)} .n-acc{color:var(--accent)} .n-flip{color:var(--flip)} .n-loose{color:var(--loose)}
 .mode-bar{display:flex;align-items:center;gap:.75rem;margin-bottom:2rem;
   background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.8rem 1.2rem;flex-wrap:wrap}
 .mode-label{font-family:'Noto Sans',sans-serif;font-size:.65rem;color:#8fa8c8;text-transform:uppercase;letter-spacing:.1em;margin-right:.25rem}
@@ -1099,6 +1101,7 @@ const MODES = {
 const STAT_PRED = {
   strict:c=>c.dataset.mode==='strict',
   loose: c=>true,
+  super: c=>c.dataset.super==='1',
   flip:  c=>c.dataset.flip==='1',
   fresh: c=>c.dataset.fresh==='1'
 };
@@ -1494,6 +1497,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="stats">
   <div class="stat clickable" id="stat-strict" onclick="setStat('strict')"><div class="stat-n n-bull" dir="ltr">{cnt_strict}</div> <div class="stat-l">{stat_strict}</div></div>
   <div class="stat clickable" id="stat-loose" onclick="setStat('loose')"><div class="stat-n n-loose" dir="ltr">{cnt_loose}</div> <div class="stat-l">{stat_loose}</div></div>
+  <div class="stat clickable" id="stat-super" onclick="setStat('super')"><div class="stat-n n-super" dir="ltr">{cnt_super}</div><div class="stat-l">{stat_super}</div></div>
   <div class="stat clickable" id="stat-flip" onclick="setStat('flip')"><div class="stat-n n-flip" dir="ltr">{rs_flips}</div>  <div class="stat-l">{stat_rsflips}</div></div>
   <div class="stat clickable" id="stat-fresh" onclick="setStat('fresh')"><div class="stat-n n-acc" dir="ltr">{fresh_signals}</div><div class="stat-l">{stat_fresh}</div></div>
 </div>
@@ -1753,6 +1757,8 @@ def build_html(lang, found, holdings_by_etf, spark_data, etf_spark_data,
         .replace("{stat_loose}",        t(lang, "stat_loose")) \
         .replace("{stat_rsflips}",      t(lang, "stat_rsflips")) \
         .replace("{stat_fresh}",        t(lang, "stat_fresh")) \
+        .replace("{cnt_super}",         str(sum(1 for _,_,_,s_ in found if s_.get("is_super")))) \
+        .replace("{stat_super}",        t(lang, "stat_super")) \
         .replace("{tab_signals}",       t(lang, "tab_signals")) \
         .replace("{tab_universe}",      t(lang, "tab_universe")) \
         .replace("{ema_filter_label}",  t(lang, "ema_filter_label")) \
